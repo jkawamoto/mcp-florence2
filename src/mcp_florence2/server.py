@@ -24,9 +24,7 @@ def open_images(file_paths: list[PathLike]) -> list[Image]:
 class Processor(Protocol):
     def ocr(self, images: list[Image]) -> list[str]: ...
 
-    def caption(
-        self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL
-    ) -> list[str]: ...
+    def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]: ...
 
 
 class Server:
@@ -45,23 +43,17 @@ class Server:
 
     def ocr(
         self,
-        file_paths: list[PathLike] = Field(
-            "A list of file paths to the image files that need to be processed."
-        ),
+        file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
     ) -> list[str]:
         """Processes image file paths with OCR, converting to RGB and returning recognized text."""
         return self.processor.ocr(open_images(file_paths))
 
     def caption(
         self,
-        file_paths: list[PathLike] = Field(
-            "A list of file paths to the image files that need to be processed."
-        ),
+        file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
     ) -> list[str]:
         """Generates detailed captions for a list of image file paths."""
-        return self.processor.caption(
-            open_images(file_paths), CaptionLevel.MORE_DETAILED
-        )
+        return self.processor.caption(open_images(file_paths), CaptionLevel.MORE_DETAILED)
 
     def run(self) -> None:
         """Run the server."""

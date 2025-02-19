@@ -24,9 +24,7 @@ SERVER_NAME: Final[str] = "Florence2"
     show_default=True,
     help="Model type",
 )
-@click.option(
-    "--cache-model", is_flag=True, help="If set, the model will be kept in VRAM"
-)
+@click.option("--cache-model", is_flag=True, help="If set, the model will be kept in VRAM")
 def main(model: str, cache_model: bool) -> None:
     """
     An MCP server for processing images using Florence-2.

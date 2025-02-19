@@ -59,9 +59,7 @@ def subprocess[T, **P](f: Callable[P, T]) -> Callable[P, T]:
     def _(*args: P.args, **kwargs: P.kwargs) -> T:
         queue: SimpleQueue[T] = SimpleQueue()
         with closing(queue) as queue:
-            with closing(
-                Process(target=Target(f, queue), args=args, kwargs=kwargs)
-            ) as proc:
+            with closing(Process(target=Target(f, queue), args=args, kwargs=kwargs)) as proc:
                 proc.start()
                 proc.join()
             return queue.get()

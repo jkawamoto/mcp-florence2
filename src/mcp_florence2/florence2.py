@@ -50,17 +50,13 @@ class Florence2:
     def ocr(self, images: list[Image]) -> list[str]:
         return self.generate("<OCR>", images)
 
-    def caption(
-        self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL
-    ) -> list[str]:
+    def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
         return self.generate(level.value, images)
 
     def generate(self, prompt: str, images: list[Image]) -> list[str]:
         res = []
         for image in images:
-            inputs = self.processor(text=prompt, images=image, return_tensors="pt").to(
-                self.device, self.torch_dtype
-            )
+            inputs = self.processor(text=prompt, images=image, return_tensors="pt").to(self.device, self.torch_dtype)
 
             generated_ids = self.model.generate(
                 input_ids=inputs["input_ids"],
@@ -69,9 +65,7 @@ class Florence2:
                 num_beams=3,
                 do_sample=False,
             )
-            generated_text = self.processor.batch_decode(
-                generated_ids, skip_special_tokens=False
-            )[0]
+            generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
 
             parsed_answer = self.processor.post_process_generation(
                 generated_text, task=prompt, image_size=(image.width, image.height)
@@ -93,7 +87,5 @@ class Florence2SP:
         return Florence2(self.model_id).ocr(images)
 
     @subprocess
-    def caption(
-        self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL
-    ) -> list[str]:
+    def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
         return Florence2(self.model_id).caption(images, level)

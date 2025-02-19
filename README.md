@@ -2,8 +2,9 @@
 [![GitHub License](https://img.shields.io/github/license/jkawamoto/mcp-florence2)](https://github.com/jkawamoto/mcp-florence2/blob/main/LICENSE)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![smithery badge](https://smithery.ai/badge/@jkawamoto/mcp-florence2)](https://smithery.ai/server/@jkawamoto/mcp-florence2)
 
-An MCP server for processing images using Florence-2.
+An MCP server for processing images using [Florence-2](https://huggingface.co/microsoft/Florence-2-large).
 
 ## Installation
 
@@ -56,6 +57,21 @@ For more details on configuring MCP servers in Goose Desktop,
 refer to the documentation:
 [Using Extensions - MCP Servers](https://block.github.io/goose/docs/getting-started/using-extensions#mcp-servers).
 
+## Tools
+
+### ocr
+Performs Optical Character Recognition (OCR) on the provided image file paths. Automatically converts images to RGB
+format and extracts the recognized text.
+
+#### Arguments:
+- **file_paths**: A list of file paths to the image files to be processed.
+
+### caption
+Generates detailed and descriptive captions for the provided image file paths. Captions are generated using advanced
+image recognition techniques.
+
+#### Arguments:
+- **file_paths**: A list of file paths to the image files to be processed.
 
 ## License
 This application is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

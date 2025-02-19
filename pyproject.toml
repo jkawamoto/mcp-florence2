@@ -1,0 +1,39 @@
+[project]
+name = "mcp-florence2"
+version = "0.1.0"
+description = "An MCP server for processing images using Florence-2"
+readme = "README.md"
+authors = [
+    { name = "Junpei Kawamoto", email = "kawamoto.junpei@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.1.8",
+    "dill>=0.3.9",
+    "einops>=0.8.1",
+    "mcp>=1.2.1",
+    "pillow>=11.1.0",
+    "pydantic>=2.10.6",
+    "timm>=1.0.14",
+    "torch>=2.6.0",
+    "transformers>=4.49.0",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+[project.scripts]
+mcp-florence2 = "mcp_florence2:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]

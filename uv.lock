@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.12"
 
 [[package]]
@@ -314,6 +315,7 @@ dependencies = [
     { name = "mcp" },
     { name = "pillow" },
     { name = "pydantic" },
+    { name = "requests" },
     { name = "timm" },
     { name = "torch" },
     { name = "transformers" },
@@ -332,16 +334,17 @@ requires-dist = [
     { name = "dill", specifier = ">=0.3.9" },
     { name = "einops", specifier = ">=0.8.1" },
     { name = "mcp", specifier = ">=1.2.1" },
-    { name = "pillow", specifier = ">=11.1.0" },
+    { name = "pillow", specifier = ">=11.1" },
     { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "requests", specifier = ">=2.32.3" },
     { name = "timm", specifier = ">=1.0.14" },
-    { name = "torch", specifier = ">=2.6.0" },
-    { name = "transformers", specifier = ">=4.49.0" },
+    { name = "torch", specifier = ">=2.6" },
+    { name = "transformers", specifier = ">=4.49" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "pre-commit", specifier = ">=4.1.0" },
+    { name = "pre-commit", specifier = ">=4.1" },
     { name = "pre-commit-uv", specifier = ">=4.1.4" },
     { name = "pytest", specifier = ">=8.3.4" },
 ]

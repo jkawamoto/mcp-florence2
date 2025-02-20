@@ -60,18 +60,28 @@ refer to the documentation:
 ## Tools
 
 ### ocr
-Performs Optical Character Recognition (OCR) on the provided image file paths. Automatically converts images to RGB
-format and extracts the recognized text.
+Performs Optical Character Recognition (OCR) on the provided image file paths.
 
 #### Arguments:
 - **file_paths**: A list of file paths to the image files to be processed.
+
+### ocr_urls
+Processes image urls with OCR and returning recognized text.
+
+#### Arguments:
+- **urls**: A list of urls to the image files that need to be processed.
 
 ### caption
-Generates detailed and descriptive captions for the provided image file paths. Captions are generated using advanced
-image recognition techniques.
+Generates detailed and descriptive captions for the provided image file paths.
 
 #### Arguments:
 - **file_paths**: A list of file paths to the image files to be processed.
+
+### caption_urls
+Generates detailed captions for a list of image urls.
+
+#### Arguments:
+- **urls**: A list of urls to the image files that need to be processed.
 
 ## License
 This application is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

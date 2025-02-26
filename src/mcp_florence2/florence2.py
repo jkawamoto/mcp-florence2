@@ -55,23 +55,26 @@ class Florence2:
 
     def generate(self, prompt: str, images: list[Image]) -> list[str]:
         res = []
-        for image in images:
-            inputs = self.processor(text=prompt, images=image, return_tensors="pt").to(self.device, self.torch_dtype)
+        for img in images:
+            with img.convert("RGB") as rgb_img:
+                inputs = self.processor(text=prompt, images=rgb_img, return_tensors="pt").to(
+                    self.device, self.torch_dtype
+                )
 
-            generated_ids = self.model.generate(
-                input_ids=inputs["input_ids"],
-                pixel_values=inputs["pixel_values"],
-                max_new_tokens=1024,
-                num_beams=3,
-                do_sample=False,
-            )
-            generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
+                generated_ids = self.model.generate(
+                    input_ids=inputs["input_ids"],
+                    pixel_values=inputs["pixel_values"],
+                    max_new_tokens=1024,
+                    num_beams=3,
+                    do_sample=False,
+                )
+                generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
 
-            parsed_answer = self.processor.post_process_generation(
-                generated_text, task=prompt, image_size=(image.width, image.height)
-            )
+                parsed_answer = self.processor.post_process_generation(
+                    generated_text, task=prompt, image_size=(rgb_img.width, rgb_img.height)
+                )
 
-            res.append(parsed_answer[prompt].strip())
+                res.append(parsed_answer[prompt].strip())
 
         return res
 

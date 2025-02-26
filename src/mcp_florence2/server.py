@@ -26,8 +26,7 @@ def open_images(file_paths: list[PathLike]) -> Iterator[list[Image.Image]]:
     with ExitStack() as stack:
         images = []
         for p in file_paths:
-            with Image.open(p) as img:
-                images.append(stack.enter_context(img.convert("RGB")))
+            images.append(stack.enter_context(Image.open(p)))
         yield images
 
 
@@ -39,8 +38,7 @@ def download_images(urls: list[str]) -> Iterator[list[Image.Image]]:
         for url in urls:
             res = requests.get(url)
             res.raise_for_status()
-            with Image.open(BytesIO(res.content)) as img:
-                images.append(stack.enter_context(img.convert("RGB")))
+            images.append(stack.enter_context(Image.open(BytesIO(res.content))))
         yield images
 
 

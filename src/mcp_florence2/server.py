@@ -77,11 +77,11 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
     mcp = FastMCP(name, lifespan=app_lifespan)
 
     if not remote:
+
         @mcp.tool()
         def ocr(
-                ctx: Context,
-                file_paths: list[PathLike] = Field(
-                    "A list of file paths to the image files that need to be processed."),
+            ctx: Context,
+            file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
         ) -> list[str]:
             """Processes image file paths with OCR and returning recognized text."""
             with open_images(file_paths) as images:
@@ -89,9 +89,8 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
 
         @mcp.tool()
         def caption(
-                ctx: Context,
-                file_paths: list[PathLike] = Field(
-                    "A list of file paths to the image files that need to be processed."),
+            ctx: Context,
+            file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
         ) -> list[str]:
             """Generates detailed captions for a list of image file paths."""
             with open_images(file_paths) as images:
@@ -99,8 +98,8 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
 
     @mcp.tool()
     def ocr_urls(
-            ctx: Context,
-            urls: list[str] = Field("A list of urls to the image files that need to be processed."),
+        ctx: Context,
+        urls: list[str] = Field("A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Processes image urls with OCR and returning recognized text."""
         with download_images(urls) as images:
@@ -108,8 +107,8 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
 
     @mcp.tool()
     def caption_urls(
-            ctx: Context,
-            urls: list[str] = Field("A list of urls to the image files that need to be processed."),
+        ctx: Context,
+        urls: list[str] = Field("A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Generates detailed captions for a list of image urls."""
         with download_images(urls) as images:

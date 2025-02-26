@@ -36,8 +36,8 @@ async def mcp_client_session() -> AsyncGenerator[ClientSession, None]:
 @pytest.fixture(scope="module")
 def static_file_server() -> Generator[str, None, None]:
     with socketserver.TCPServer(
-            ("", 0),
-            partial(server.SimpleHTTPRequestHandler, directory=os.path.dirname(__file__)),
+        ("", 0),
+        partial(server.SimpleHTTPRequestHandler, directory=os.path.dirname(__file__)),
     ) as httpd:
         port = httpd.server_address[1]
         server_thread = threading.Thread(target=httpd.serve_forever)

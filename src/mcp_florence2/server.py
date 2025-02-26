@@ -5,11 +5,11 @@
 #  This software is released under the MIT License.
 #
 #  http://opensource.org/licenses/mit-license.php
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager, ExitStack
 from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
-from typing import Protocol, AsyncIterator
+from typing import Protocol, AsyncIterator, Iterator
 
 import requests
 from PIL import Image
@@ -20,20 +20,28 @@ from pydantic import Field
 from mcp_florence2.florence2 import Florence2, Florence2SP, CaptionLevel
 
 
-def open_images(file_paths: list[PathLike]) -> list[Image]:
+@contextmanager
+def open_images(file_paths: list[PathLike]) -> Iterator[list[Image]]:
     """Opens a list of image files and converts them to RGB mode."""
-    return [Image.open(p).convert("RGB") for p in file_paths]
+    with ExitStack() as stack:
+        images = []
+        for p in file_paths:
+            with Image.open(p) as img:
+                images.append(stack.enter_context(img.convert("RGB")))
+        yield images
 
 
-def download_images(urls: list[str]) -> list[Image]:
+@contextmanager
+def download_images(urls: list[str]) -> Iterator[list[Image]]:
     """Downloads a list of image files and converts them to RGB mode."""
-    images = []
-    for url in urls:
-        response = requests.get(url)
-        response.raise_for_status()
-
-        images.append(Image.open(BytesIO(response.content)).convert("RGB"))
-    return images
+    with ExitStack() as stack:
+        images = []
+        for url in urls:
+            res = requests.get(url)
+            res.raise_for_status()
+            with Image.open(BytesIO(res.content)) as img:
+                images.append(stack.enter_context(img.convert("RGB")))
+        yield images
 
 
 class Processor(Protocol):
@@ -76,7 +84,8 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
                     "A list of file paths to the image files that need to be processed."),
         ) -> list[str]:
             """Processes image file paths with OCR and returning recognized text."""
-            return ctx.request_context.lifespan_context.processor.ocr(open_images(file_paths))
+            with open_images(file_paths) as images:
+                return ctx.request_context.lifespan_context.processor.ocr(images)
 
         @mcp.tool()
         def caption(
@@ -85,9 +94,8 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
                     "A list of file paths to the image files that need to be processed."),
         ) -> list[str]:
             """Generates detailed captions for a list of image file paths."""
-            return ctx.request_context.lifespan_context.processor.caption(
-                open_images(file_paths), CaptionLevel.MORE_DETAILED
-            )
+            with open_images(file_paths) as images:
+                return ctx.request_context.lifespan_context.processor.caption(images, CaptionLevel.MORE_DETAILED)
 
     @mcp.tool()
     def ocr_urls(
@@ -95,7 +103,8 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
             urls: list[str] = Field("A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Processes image urls with OCR and returning recognized text."""
-        return ctx.request_context.lifespan_context.processor.ocr(download_images(urls))
+        with download_images(urls) as images:
+            return ctx.request_context.lifespan_context.processor.ocr(images)
 
     @mcp.tool()
     def caption_urls(
@@ -103,6 +112,7 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
             urls: list[str] = Field("A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Generates detailed captions for a list of image urls."""
-        return ctx.request_context.lifespan_context.processor.caption(download_images(urls), CaptionLevel.MORE_DETAILED)
+        with download_images(urls) as images:
+            return ctx.request_context.lifespan_context.processor.caption(images, CaptionLevel.MORE_DETAILED)
 
     return mcp

@@ -5,13 +5,16 @@
 #  This software is released under the MIT License.
 #
 #  http://opensource.org/licenses/mit-license.php
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
-from typing import Protocol
+from typing import Protocol, AsyncIterator
 
 import requests
 from PIL import Image
 from mcp.server import FastMCP
+from mcp.server.fastmcp import Context
 from pydantic import Field
 
 from mcp_florence2.florence2 import Florence2, Florence2SP, CaptionLevel
@@ -34,56 +37,72 @@ def download_images(urls: list[str]) -> list[Image]:
 
 
 class Processor(Protocol):
+    """Represents a protocol for processing image data.
+
+    This class provides an interface for implementing image processing
+    operations, including optical character recognition (OCR) and generating
+    captions based on the content of the images. It is meant to be used as a
+    guideline for defining specific processors that conform to this protocol.
+    """
+
     def ocr(self, images: list[Image]) -> list[str]: ...
 
     def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]: ...
 
 
-class Server:
+@dataclass
+class AppContext:
+    """Context for the FastMCP app."""
+
     processor: Processor
-    mcp: FastMCP
 
-    def __init__(self, name: str, model_id: str, subprocess: bool = True, remote: bool = False):
+
+def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool = False) -> FastMCP:
+    @asynccontextmanager
+    async def app_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
         if subprocess:
-            self.processor = Florence2SP(model_id)
+            processor = Florence2SP(model_id)
         else:
-            self.processor = Florence2(model_id)
+            processor = Florence2(model_id)
+        yield AppContext(processor)
 
-        self.mcp = FastMCP(name)
-        if not remote:
-            self.mcp.tool()(self.ocr)
-            self.mcp.tool()(self.caption)
-        self.mcp.tool()(self.ocr_urls)
-        self.mcp.tool()(self.caption_urls)
+    mcp = FastMCP(name, lifespan=app_lifespan)
 
-    def ocr(
-        self,
-        file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
-    ) -> list[str]:
-        """Processes image file paths with OCR and returning recognized text."""
-        return self.processor.ocr(open_images(file_paths))
+    if not remote:
+        @mcp.tool()
+        def ocr(
+                ctx: Context,
+                file_paths: list[PathLike] = Field(
+                    "A list of file paths to the image files that need to be processed."),
+        ) -> list[str]:
+            """Processes image file paths with OCR and returning recognized text."""
+            return ctx.request_context.lifespan_context.processor.ocr(open_images(file_paths))
 
+        @mcp.tool()
+        def caption(
+                ctx: Context,
+                file_paths: list[PathLike] = Field(
+                    "A list of file paths to the image files that need to be processed."),
+        ) -> list[str]:
+            """Generates detailed captions for a list of image file paths."""
+            return ctx.request_context.lifespan_context.processor.caption(
+                open_images(file_paths), CaptionLevel.MORE_DETAILED
+            )
+
+    @mcp.tool()
     def ocr_urls(
-        self,
-        urls: list[str] = Field("A list of urls to the image files that need to be processed."),
+            ctx: Context,
+            urls: list[str] = Field("A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Processes image urls with OCR and returning recognized text."""
-        return self.processor.ocr(download_images(urls))
+        return ctx.request_context.lifespan_context.processor.ocr(download_images(urls))
 
-    def caption(
-        self,
-        file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
-    ) -> list[str]:
-        """Generates detailed captions for a list of image file paths."""
-        return self.processor.caption(open_images(file_paths), CaptionLevel.MORE_DETAILED)
-
+    @mcp.tool()
     def caption_urls(
-        self,
-        urls: list[str] = Field("A list of urls to the image files that need to be processed."),
+            ctx: Context,
+            urls: list[str] = Field("A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Generates detailed captions for a list of image urls."""
-        return self.processor.caption(download_images(urls), CaptionLevel.MORE_DETAILED)
+        return ctx.request_context.lifespan_context.processor.caption(download_images(urls), CaptionLevel.MORE_DETAILED)
 
-    def run(self) -> None:
-        """Run the server."""
-        self.mcp.run()
+    return mcp

@@ -11,7 +11,7 @@ from typing import Final
 
 import click
 
-from .server import Server
+from .server import new_server
 
 SERVER_NAME: Final[str] = "Florence2"
 
@@ -35,7 +35,7 @@ def main(model: str, cache_model: bool, remote: bool) -> None:
     logger = logging.getLogger(__name__)
 
     model_id = f"microsoft/Florence-2-{model}"
-    s = Server(SERVER_NAME, model_id, not cache_model, remote)
+    s = new_server(SERVER_NAME, model_id, not cache_model, remote)
 
     logger.info(f"Starting server with {model_id} (Press CTRL+D to quit)")
     s.run()

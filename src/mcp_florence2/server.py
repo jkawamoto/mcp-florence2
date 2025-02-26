@@ -21,7 +21,7 @@ from mcp_florence2.florence2 import Florence2, Florence2SP, CaptionLevel
 
 
 @contextmanager
-def open_images(file_paths: list[PathLike]) -> Iterator[list[Image]]:
+def open_images(file_paths: list[PathLike]) -> Iterator[list[Image.Image]]:
     """Opens a list of image files and converts them to RGB mode."""
     with ExitStack() as stack:
         images = []
@@ -32,7 +32,7 @@ def open_images(file_paths: list[PathLike]) -> Iterator[list[Image]]:
 
 
 @contextmanager
-def download_images(urls: list[str]) -> Iterator[list[Image]]:
+def download_images(urls: list[str]) -> Iterator[list[Image.Image]]:
     """Downloads a list of image files and converts them to RGB mode."""
     with ExitStack() as stack:
         images = []
@@ -53,9 +53,9 @@ class Processor(Protocol):
     guideline for defining specific processors that conform to this protocol.
     """
 
-    def ocr(self, images: list[Image]) -> list[str]: ...
+    def ocr(self, images: list[Image.Image]) -> list[str]: ...
 
-    def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]: ...
+    def caption(self, images: list[Image.Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]: ...
 
 
 @dataclass
@@ -68,6 +68,7 @@ class AppContext:
 def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool = False) -> FastMCP:
     @asynccontextmanager
     async def app_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
+        processor: Processor
         if subprocess:
             processor = Florence2SP(model_id)
         else:
@@ -81,37 +82,45 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
         @mcp.tool()
         def ocr(
             ctx: Context,
-            file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
+            file_paths: list[PathLike] = Field(
+                description="A list of file paths to the image files that need to be processed."
+            ),
         ) -> list[str]:
             """Processes image file paths with OCR and returning recognized text."""
             with open_images(file_paths) as images:
-                return ctx.request_context.lifespan_context.processor.ocr(images)
+                processor: Processor = ctx.request_context.lifespan_context.processor
+                return processor.ocr(images)
 
         @mcp.tool()
         def caption(
             ctx: Context,
-            file_paths: list[PathLike] = Field("A list of file paths to the image files that need to be processed."),
+            file_paths: list[PathLike] = Field(
+                description="A list of file paths to the image files that need to be processed."
+            ),
         ) -> list[str]:
             """Generates detailed captions for a list of image file paths."""
             with open_images(file_paths) as images:
-                return ctx.request_context.lifespan_context.processor.caption(images, CaptionLevel.MORE_DETAILED)
+                processor: Processor = ctx.request_context.lifespan_context.processor
+                return processor.caption(images, CaptionLevel.MORE_DETAILED)
 
     @mcp.tool()
     def ocr_urls(
         ctx: Context,
-        urls: list[str] = Field("A list of urls to the image files that need to be processed."),
+        urls: list[str] = Field(description="A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Processes image urls with OCR and returning recognized text."""
         with download_images(urls) as images:
-            return ctx.request_context.lifespan_context.processor.ocr(images)
+            processor: Processor = ctx.request_context.lifespan_context.processor
+            return processor.ocr(images)
 
     @mcp.tool()
     def caption_urls(
         ctx: Context,
-        urls: list[str] = Field("A list of urls to the image files that need to be processed."),
+        urls: list[str] = Field(description="A list of urls to the image files that need to be processed."),
     ) -> list[str]:
         """Generates detailed captions for a list of image urls."""
         with download_images(urls) as images:
-            return ctx.request_context.lifespan_context.processor.caption(images, CaptionLevel.MORE_DETAILED)
+            processor: Processor = ctx.request_context.lifespan_context.processor
+            return processor.caption(images, CaptionLevel.MORE_DETAILED)
 
     return mcp

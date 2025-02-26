@@ -11,12 +11,15 @@ from __future__ import annotations
 from contextlib import closing
 from functools import wraps
 from multiprocessing import Process, SimpleQueue
-from typing import override, Any, Callable
+from typing import Any, Callable, Generic, TypeVar, ParamSpec
 
 import dill
 
+T = TypeVar("T")
+P = ParamSpec("P")
 
-class Target[T, **P]:
+
+class Target(Generic[T, P]):
     f: Callable[P, T]
     queue: SimpleQueue[T]
 
@@ -27,7 +30,6 @@ class Target[T, **P]:
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> None:
         self.queue.put(self.f(*args, **kwargs))
 
-    @override
     def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         state["f"] = dill.dumps(self.f)
@@ -39,7 +41,7 @@ class Target[T, **P]:
         self.__dict__.update(state)
 
 
-def subprocess[T, **P](f: Callable[P, T]) -> Callable[P, T]:
+def subprocess(f: Callable[P, T]) -> Callable[P, T]:
     """Wraps a function to execute it in a subprocess.
 
     The target function will be run

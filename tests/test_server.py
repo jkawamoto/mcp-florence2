@@ -10,10 +10,11 @@ import socketserver
 import threading
 from functools import partial
 from http import server
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator, Generator, cast
 
 import pytest
 from mcp import StdioServerParameters, ClientSession, stdio_client
+from mcp.types import TextContent
 
 SAMPLE_IMAGE_FILEPATH = os.path.join(os.path.dirname(__file__), "sample.jpg")
 
@@ -68,7 +69,7 @@ async def test_caption(mcp_client_session: ClientSession) -> None:
         "caption",
         arguments={"file_paths": [SAMPLE_IMAGE_FILEPATH]},
     )
-    text = "\n".join(c.text for c in res.content)
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
     assert not res.isError
@@ -80,7 +81,7 @@ async def test_ocr(mcp_client_session: ClientSession) -> None:
         "ocr",
         arguments={"file_paths": [SAMPLE_IMAGE_FILEPATH]},
     )
-    text = "\n".join(c.text for c in res.content)
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
     assert not res.isError
@@ -92,7 +93,7 @@ async def test_caption_urls(mcp_client_session: ClientSession, static_file_serve
         "caption_urls",
         arguments={"urls": [static_file_server + "/sample.jpg"]},
     )
-    text = "\n".join(c.text for c in res.content)
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
     assert not res.isError
@@ -104,7 +105,7 @@ async def test_ocr_urls(mcp_client_session: ClientSession, static_file_server: s
         "ocr_urls",
         arguments={"urls": [static_file_server + "/sample.jpg"]},
     )
-    text = "\n".join(c.text for c in res.content)
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
     assert not res.isError

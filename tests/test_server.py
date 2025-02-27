@@ -17,6 +17,7 @@ from mcp import StdioServerParameters, ClientSession, stdio_client
 from mcp.types import TextContent
 
 SAMPLE_IMAGE_FILEPATH = os.path.join(os.path.dirname(__file__), "sample.jpg")
+SAMPLE_PDF_FILEPATH = os.path.join(os.path.dirname(__file__), "sample.pdf")
 
 SERVER_PARAMS = StdioServerParameters(command="uv", args=["run", "mcp-florence2", "--cache-model", "--model", "base"])
 
@@ -86,6 +87,30 @@ async def test_caption_url(mcp_client_session: ClientSession, static_file_server
 
 
 @pytest.mark.anyio
+async def test_caption_pdf(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "caption",
+        arguments={"src": SAMPLE_PDF_FILEPATH},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.isError
+
+
+@pytest.mark.anyio
+async def test_caption_pdf_from_web(mcp_client_session: ClientSession, static_file_server: str) -> None:
+    res = await mcp_client_session.call_tool(
+        "caption",
+        arguments={"src": static_file_server + "/sample.pdf"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.isError
+
+
+@pytest.mark.anyio
 async def test_ocr(mcp_client_session: ClientSession) -> None:
     res = await mcp_client_session.call_tool(
         "ocr",
@@ -102,6 +127,30 @@ async def test_ocr_url(mcp_client_session: ClientSession, static_file_server: st
     res = await mcp_client_session.call_tool(
         "ocr",
         arguments={"src": static_file_server + "/sample.jpg"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.isError
+
+
+@pytest.mark.anyio
+async def test_ocr_pdf(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "ocr",
+        arguments={"src": SAMPLE_PDF_FILEPATH},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.isError
+
+
+@pytest.mark.anyio
+async def test_ocr_pdf_from_web(mcp_client_session: ClientSession, static_file_server: str) -> None:
+    res = await mcp_client_session.call_tool(
+        "ocr",
+        arguments={"src": static_file_server + "/sample.pdf"},
     )
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 

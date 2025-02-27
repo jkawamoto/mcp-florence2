@@ -25,17 +25,14 @@ SERVER_NAME: Final[str] = "Florence2"
     help="Specifies the model type to be used for processing.",
 )
 @click.option("--cache-model", is_flag=True, help="Keeps the model in VRAM for faster subsequent operations if set.")
-@click.option(
-    "--remote", is_flag=True, help="Disables local file access and runs the server in remote-only mode if set."
-)
-def main(model: str, cache_model: bool, remote: bool) -> None:
+def main(model: str, cache_model: bool) -> None:
     """
     An MCP server for processing images using Florence-2.
     """
     logger = logging.getLogger(__name__)
 
     model_id = f"microsoft/Florence-2-{model}"
-    s = new_server(SERVER_NAME, model_id, not cache_model, remote)
+    s = new_server(SERVER_NAME, model_id, not cache_model)
 
     logger.info(f"Starting server with {model_id} (Press CTRL+D to quit)")
     s.run()

@@ -59,15 +59,25 @@ async def test_list_tools(mcp_client_session: ClientSession) -> None:
 
     assert "caption" in tools
     assert "ocr" in tools
-    assert "caption_urls" in tools
-    assert "ocr_urls" in tools
 
 
 @pytest.mark.anyio
 async def test_caption(mcp_client_session: ClientSession) -> None:
     res = await mcp_client_session.call_tool(
         "caption",
-        arguments={"file_paths": [SAMPLE_IMAGE_FILEPATH]},
+        arguments={"src": SAMPLE_IMAGE_FILEPATH},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.isError
+
+
+@pytest.mark.anyio
+async def test_caption_url(mcp_client_session: ClientSession, static_file_server: str) -> None:
+    res = await mcp_client_session.call_tool(
+        "caption",
+        arguments={"src": static_file_server + "/sample.jpg"},
     )
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
@@ -79,7 +89,7 @@ async def test_caption(mcp_client_session: ClientSession) -> None:
 async def test_ocr(mcp_client_session: ClientSession) -> None:
     res = await mcp_client_session.call_tool(
         "ocr",
-        arguments={"file_paths": [SAMPLE_IMAGE_FILEPATH]},
+        arguments={"src": SAMPLE_IMAGE_FILEPATH},
     )
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
@@ -88,22 +98,10 @@ async def test_ocr(mcp_client_session: ClientSession) -> None:
 
 
 @pytest.mark.anyio
-async def test_caption_urls(mcp_client_session: ClientSession, static_file_server: str) -> None:
+async def test_ocr_url(mcp_client_session: ClientSession, static_file_server: str) -> None:
     res = await mcp_client_session.call_tool(
-        "caption_urls",
-        arguments={"urls": [static_file_server + "/sample.jpg"]},
-    )
-    text = "\n".join(cast(TextContent, c).text for c in res.content)
-
-    assert len(text) > 0
-    assert not res.isError
-
-
-@pytest.mark.anyio
-async def test_ocr_urls(mcp_client_session: ClientSession, static_file_server: str) -> None:
-    res = await mcp_client_session.call_tool(
-        "ocr_urls",
-        arguments={"urls": [static_file_server + "/sample.jpg"]},
+        "ocr",
+        arguments={"src": static_file_server + "/sample.jpg"},
     )
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 

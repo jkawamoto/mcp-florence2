@@ -5,7 +5,8 @@
 #  This software is released under the MIT License.
 #
 #  http://opensource.org/licenses/mit-license.php
-from contextlib import asynccontextmanager, contextmanager
+import os
+from contextlib import asynccontextmanager, contextmanager, closing, ExitStack
 from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
@@ -16,6 +17,7 @@ from PIL.Image import Image, open as open_image
 from mcp.server import FastMCP
 from mcp.server.fastmcp import Context
 from pydantic import Field
+from pypdfium2 import PdfDocument
 
 from mcp_florence2.florence2 import Florence2, Florence2SP, CaptionLevel
 
@@ -23,14 +25,35 @@ from mcp_florence2.florence2 import Florence2, Florence2SP, CaptionLevel
 @contextmanager
 def get_images(src: PathLike | str) -> Iterator[list[Image]]:
     """Opens and returns a list of images from a file path or URL."""
-    if not isinstance(src, PathLike) and (src.startswith("http://") or src.startswith("https://")):
+    if isinstance(src, str) and (src.startswith("http://") or src.startswith("https://")):
         res = requests.get(src)
         res.raise_for_status()
-        with open_image(BytesIO(res.content)) as image:
-            yield [image]
+
+        if res.headers["Content-Type"] == "application/pdf":
+            pass
+            with ExitStack() as stack:
+                images = []
+                with closing(PdfDocument(res.content)) as doc:
+                    for page in doc:
+                        images.append(stack.enter_context(page.render().to_pil()))
+                yield images
+
+        else:
+            with open_image(BytesIO(res.content)) as image:
+                yield [image]
+
     else:
-        with open_image(src) as image:
-            yield [image]
+        ext = os.path.splitext(src)[1].lower()
+        if ext == ".pdf":
+            with ExitStack() as stack:
+                images = []
+                with closing(PdfDocument(src)) as doc:
+                    for page in doc:
+                        images.append(stack.enter_context(page.render().to_pil()))
+                yield images
+        else:
+            with open_image(src) as image:
+                yield [image]
 
 
 class Processor(Protocol):

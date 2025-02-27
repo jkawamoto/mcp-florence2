@@ -36,6 +36,7 @@ scripts.mcp-florence2 = "mcp_florence2:main"
 
 [dependency-groups]
 dev = [
+    "bump-my-version>=0.32.2",
     "pre-commit>=4.1",
     "pre-commit-uv>=4.1.4",
     "pytest>=8.3.4",
@@ -47,6 +48,19 @@ line-length = 120
 
 [tool.pyproject-fmt]
 indent = 4
+
+[tool.bumpversion]
+current_version = "0.1.0"
+commit = true
+pre_commit_hooks = [
+    "uv sync",
+    "git add uv.lock",
+]
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
 
 [tool.mypy]
 warn_return_any = true

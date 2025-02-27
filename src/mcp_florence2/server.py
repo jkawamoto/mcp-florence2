@@ -5,14 +5,14 @@
 #  This software is released under the MIT License.
 #
 #  http://opensource.org/licenses/mit-license.php
-from contextlib import asynccontextmanager, contextmanager, ExitStack
+from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
 from typing import Protocol, AsyncIterator, Iterator
 
 import requests
-from PIL import Image
+from PIL.Image import Image, open as open_image
 from mcp.server import FastMCP
 from mcp.server.fastmcp import Context
 from pydantic import Field
@@ -21,25 +21,16 @@ from mcp_florence2.florence2 import Florence2, Florence2SP, CaptionLevel
 
 
 @contextmanager
-def open_images(file_paths: list[PathLike]) -> Iterator[list[Image.Image]]:
-    """Opens a list of image files and converts them to RGB mode."""
-    with ExitStack() as stack:
-        images = []
-        for p in file_paths:
-            images.append(stack.enter_context(Image.open(p)))
-        yield images
-
-
-@contextmanager
-def download_images(urls: list[str]) -> Iterator[list[Image.Image]]:
-    """Downloads a list of image files and converts them to RGB mode."""
-    with ExitStack() as stack:
-        images = []
-        for url in urls:
-            res = requests.get(url)
-            res.raise_for_status()
-            images.append(stack.enter_context(Image.open(BytesIO(res.content))))
-        yield images
+def get_images(src: PathLike | str) -> Iterator[list[Image]]:
+    """Opens and returns a list of images from a file path or URL."""
+    if not isinstance(src, PathLike) and (src.startswith("http://") or src.startswith("https://")):
+        res = requests.get(src)
+        res.raise_for_status()
+        with open_image(BytesIO(res.content)) as image:
+            yield [image]
+    else:
+        with open_image(src) as image:
+            yield [image]
 
 
 class Processor(Protocol):
@@ -51,9 +42,24 @@ class Processor(Protocol):
     guideline for defining specific processors that conform to this protocol.
     """
 
-    def ocr(self, images: list[Image.Image]) -> list[str]: ...
+    def ocr(self, images: list[Image]) -> list[str]:
+        """Performs optical character recognition (OCR) on a list of images.
 
-    def caption(self, images: list[Image.Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]: ...
+        This function takes a list of images and processes each image using OCR
+        to retrieve the text content present within the images. The function
+        returns a list of strings, where each string corresponds to the text
+        extracted from the respective image in the input list.
+        """
+        ...
+
+    def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
+        """Generates a list of captions for the given images based on the specified captioning level.
+
+        It processes an input list of images and returns the corresponding captions
+        in a text format. The caption level influences the verbosity or granularity
+        of the generated captions.
+        """
+        ...
 
 
 @dataclass
@@ -63,7 +69,7 @@ class AppContext:
     processor: Processor
 
 
-def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool = False) -> FastMCP:
+def new_server(name: str, model_id: str, subprocess: bool = True) -> FastMCP:
     @asynccontextmanager
     async def app_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
         processor: Processor
@@ -75,49 +81,23 @@ def new_server(name: str, model_id: str, subprocess: bool = True, remote: bool =
 
     mcp = FastMCP(name, lifespan=app_lifespan)
 
-    if not remote:
-
-        @mcp.tool()
-        def ocr(
-            ctx: Context,
-            file_paths: list[PathLike] = Field(
-                description="A list of file paths to the image files that need to be processed."
-            ),
-        ) -> list[str]:
-            """Processes image file paths with OCR and returning recognized text."""
-            with open_images(file_paths) as images:
-                processor: Processor = ctx.request_context.lifespan_context.processor
-                return processor.ocr(images)
-
-        @mcp.tool()
-        def caption(
-            ctx: Context,
-            file_paths: list[PathLike] = Field(
-                description="A list of file paths to the image files that need to be processed."
-            ),
-        ) -> list[str]:
-            """Generates detailed captions for a list of image file paths."""
-            with open_images(file_paths) as images:
-                processor: Processor = ctx.request_context.lifespan_context.processor
-                return processor.caption(images, CaptionLevel.MORE_DETAILED)
-
     @mcp.tool()
-    def ocr_urls(
+    def ocr(
         ctx: Context,
-        urls: list[str] = Field(description="A list of urls to the image files that need to be processed."),
+        src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
     ) -> list[str]:
-        """Processes image urls with OCR and returning recognized text."""
-        with download_images(urls) as images:
+        """Process an image file or URL using OCR to extract text."""
+        with get_images(src) as images:
             processor: Processor = ctx.request_context.lifespan_context.processor
             return processor.ocr(images)
 
     @mcp.tool()
-    def caption_urls(
+    def caption(
         ctx: Context,
-        urls: list[str] = Field(description="A list of urls to the image files that need to be processed."),
+        src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
     ) -> list[str]:
-        """Generates detailed captions for a list of image urls."""
-        with download_images(urls) as images:
+        """Processes an image file and generates captions for the image."""
+        with get_images(src) as images:
             processor: Processor = ctx.request_context.lifespan_context.processor
             return processor.caption(images, CaptionLevel.MORE_DETAILED)
 

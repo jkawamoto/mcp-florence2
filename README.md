@@ -8,6 +8,9 @@
 
 An MCP server for processing images using [Florence-2](https://huggingface.co/microsoft/Florence-2-large).
 
+You can process images or PDF files stored on a local or web server to extract text using OCR (Optical Character
+Recognition) or generate descriptive captions summarizing the content of the images.
+
 ## Installation
 
 ### For Claude Desktop

@@ -5,4 +5,4 @@ startCommand:
     type: object
     properties: {}
   commandFunction: |-
-    (config) => ({ command: 'mcp-florence2' }, args: ['--cache-model'])
+    (config) => ({ command: 'mcp-florence2' }, args: ['--cache-model', '--model', 'base'])

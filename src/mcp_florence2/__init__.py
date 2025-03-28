@@ -9,7 +9,7 @@
 import logging
 from typing import Final
 
-import click
+import rich_click as click
 
 from .server import new_server
 
@@ -25,6 +25,7 @@ SERVER_NAME: Final[str] = "Florence2"
     help="Specifies the model type to be used for processing.",
 )
 @click.option("--cache-model", is_flag=True, help="Keeps the model in VRAM for faster subsequent operations if set.")
+@click.version_option()
 def main(model: str, cache_model: bool) -> None:
     """
     An MCP server for processing images using Florence-2.

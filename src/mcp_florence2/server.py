@@ -8,6 +8,7 @@
 import os
 from contextlib import asynccontextmanager, contextmanager, closing, ExitStack
 from dataclasses import dataclass
+from functools import partial
 from io import BytesIO
 from os import PathLike
 from typing import Protocol, AsyncIterator, Iterator
@@ -92,17 +93,20 @@ class AppContext:
     processor: Processor
 
 
-def new_server(name: str, model_id: str, subprocess: bool = True) -> FastMCP:
-    @asynccontextmanager
-    async def app_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
-        processor: Processor
-        if subprocess:
-            processor = Florence2SP(model_id)
-        else:
-            processor = Florence2(model_id)
-        yield AppContext(processor)
+@asynccontextmanager
+async def app_lifespan(_server: FastMCP, model_id: str, subprocess: bool) -> AsyncIterator[AppContext]:
+    """Context manager for the FastMCP app lifespan."""
+    processor: Processor
+    if subprocess:
+        processor = Florence2SP(model_id)
+    else:
+        processor = Florence2(model_id)
+    yield AppContext(processor)
 
-    mcp = FastMCP(name, lifespan=app_lifespan)
+
+def new_server(name: str, model_id: str, subprocess: bool = True) -> FastMCP:
+    """Creates a new FastMCP server instance with the specified name and model ID."""
+    mcp = FastMCP(name, lifespan=partial(app_lifespan, model_id=model_id, subprocess=subprocess))
 
     @mcp.tool()
     def ocr(
@@ -111,8 +115,8 @@ def new_server(name: str, model_id: str, subprocess: bool = True) -> FastMCP:
     ) -> list[str]:
         """Process an image file or URL using OCR to extract text."""
         with get_images(src) as images:
-            processor: Processor = ctx.request_context.lifespan_context.processor
-            return processor.ocr(images)
+            app_ctx: AppContext = ctx.request_context.lifespan_context
+            return app_ctx.processor.ocr(images)
 
     @mcp.tool()
     def caption(
@@ -121,7 +125,7 @@ def new_server(name: str, model_id: str, subprocess: bool = True) -> FastMCP:
     ) -> list[str]:
         """Processes an image file and generates captions for the image."""
         with get_images(src) as images:
-            processor: Processor = ctx.request_context.lifespan_context.processor
-            return processor.caption(images, CaptionLevel.MORE_DETAILED)
+            app_ctx: AppContext = ctx.request_context.lifespan_context
+            return app_ctx.processor.caption(images, CaptionLevel.MORE_DETAILED)
 
     return mcp

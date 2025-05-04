@@ -33,7 +33,7 @@ dependencies = [
     "torch>=2.6",
     "transformers>=4.49",
 ]
-scripts.mcp-florence2 = "mcp_florence2:main"
+scripts.mcp-florence2 = "mcp_florence2.cli:main"
 
 [dependency-groups]
 dev = [

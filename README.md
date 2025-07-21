@@ -6,6 +6,8 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![smithery badge](https://smithery.ai/badge/@jkawamoto/mcp-florence2)](https://smithery.ai/server/@jkawamoto/mcp-florence2)
 
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/jkawamoto-mcp-florence2-badge.png)](https://mseep.ai/app/jkawamoto-mcp-florence2)
+
 An MCP server for processing images using [Florence-2](https://huggingface.co/microsoft/Florence-2-large).
 
 You can process images or PDF files stored on a local or web server to extract text using OCR (Optical Character

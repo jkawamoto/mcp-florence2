@@ -5,7 +5,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "mcp-florence2"
-version = "0.3.2"
+version = "0.3.3"
 description = "An MCP server for processing images using Florence-2"
 readme = "README.md"
 authors = [
@@ -53,7 +53,7 @@ line-length = 120
 indent = 4
 
 [tool.bumpversion]
-current_version = "0.3.2"
+current_version = "0.3.3"
 commit = true
 pre_commit_hooks = [
     "uv sync",

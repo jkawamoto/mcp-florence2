@@ -12,7 +12,7 @@ from typing import Any
 import torch
 from PIL.Image import Image
 from torch import dtype
-from transformers import AutoModelForCausalLM, AutoProcessor
+from transformers import AutoProcessor, Florence2ForConditionalGeneration
 
 from .subprocess import subprocess
 
@@ -26,7 +26,7 @@ class CaptionLevel(StrEnum):
 class Florence2:
     device: str
     torch_dtype: dtype
-    model: AutoModelForCausalLM
+    model: Any
     processor: Any
 
     def __init__(self, model_id: str) -> None:
@@ -40,8 +40,8 @@ class Florence2:
             self.device = "cpu"
             self.torch_dtype = torch.float32
 
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_id, torch_dtype=self.torch_dtype, trust_remote_code=True
+        self.model = Florence2ForConditionalGeneration.from_pretrained(
+            model_id, dtype=self.torch_dtype, trust_remote_code=True
         ).to(self.device)
         self.processor = AutoProcessor.from_pretrained(
             model_id, trust_remote_code=True, clean_up_tokenization_spaces=True
@@ -51,7 +51,7 @@ class Florence2:
         return self.generate("<OCR>", images)
 
     def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
-        return self.generate(level.value, images)
+        return self.generate(str(level.value), images)
 
     def generate(self, prompt: str, images: list[Image]) -> list[str]:
         res = []

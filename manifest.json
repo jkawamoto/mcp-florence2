@@ -1,0 +1,46 @@
+{
+  "manifest_version": "0.1",
+  "name": "mcp-florence2",
+  "display_name": "Florence-2 MCP Server",
+  "version": "0.3.2",
+  "description": "An MCP server for processing images using Florence-2",
+  "author": {
+    "name": "Junpei Kawamoto",
+    "email": "kawamoto.junpei.s64@kyoto-u.jp",
+    "url": "https://github.com/jkawamoto"
+  },
+  "homepage": "https://github.com/jkawamoto/mcp-florence2",
+  "documentation": "https://github.com/jkawamoto/mcp-florence2",
+  "support": "https://github.com/jkawamoto/mcp-florence2/issues",
+  "server": {
+    "type": "python",
+    "entry_point": "src/mcp_florence2/__main__.py",
+    "mcp_config": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "${__dirname}",
+        "mcp-florence2"
+      ]
+    }
+  },
+  "tools": [
+    {
+      "name": "ocr",
+      "description": "Process an image file or URL using OCR to extract text."
+    },
+    {
+      "name": "caption",
+      "description": "Processes an image file and generates captions for the image."
+    }
+  ],
+  "keywords": [
+    "florence-2",
+    "vision"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jkawamoto/mcp-florence2"
+  }
+}

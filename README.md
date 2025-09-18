@@ -16,9 +16,12 @@ Recognition) or generate descriptive captions summarizing the content of the ima
 ## Installation
 
 ### For Claude Desktop
+Download the latest MCP bundle `mcp-florence2.mcpb` from
+the [Releases](https://github.com/jkawamoto/mcp-florence2/releases) page,
+then open the downloaded `.mcpb `file or drag it into the Claude Desktop's Settings window.
 
-To configure this server for Claude Desktop, edit the `claude_desktop_config.json` file with the following entry under
-`mcpServers`:
+You can also manually configure this server for Claude Desktop.
+Edit the `claude_desktop_config.json` file by adding the following entry under `mcpServers`:
 
 ```json
 {

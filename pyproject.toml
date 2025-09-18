@@ -9,7 +9,7 @@ version = "0.3.2"
 description = "An MCP server for processing images using Florence-2"
 readme = "README.md"
 authors = [
-    { name = "Junpei Kawamoto", email = "kawamoto.junpei@gmail.com" },
+    { name = "Junpei Kawamoto", email = "kawamoto.junpei.s64@kyoto-u.jp" },
 ]
 requires-python = ">=3.12"
 classifiers = [
@@ -63,6 +63,21 @@ pre_commit_hooks = [
 filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "manifest.json"
+search = '"version": "{current_version}"'
+replace = '"version": "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "server.json"
+search = '"version": "{current_version}"'
+replace = '"version": "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "server.json"
+search = 'download/v{current_version}'
+replace = 'download/v{new_version}'
 
 [tool.mypy]
 warn_return_any = true

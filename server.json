@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.jkawamoto/mcp-florence2",
+  "description": "An MCP server for processing images using Florence-2",
+  "status": "active",
+  "repository": {
+    "url": "https://github.com/jkawamoto/mcp-florence2",
+    "source": "github"
+  },
+  "version": "0.3.2",
+  "packages": [
+    {
+      "registry_type": "mcpb",
+      "identifier": "https://github.com/jkawamoto/mcp-florence2/releases/download/v0.3.2/mcp-florence2.mcpb",
+      "file_sha256": "58fcb84d444c01f3d7e9a3dd3ea6fa45dc7515663141527936ee8daec2cd0f63",
+      "version": "0.3.2",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

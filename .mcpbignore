@@ -1,0 +1,6 @@
+.*
+tests/
+__pycache__/
+server.json
+Dockerfile
+smithery.yaml

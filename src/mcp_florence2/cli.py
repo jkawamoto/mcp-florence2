@@ -28,7 +28,7 @@ def main(model: str, cache_model: bool) -> None:
     """
     logger = logging.getLogger(__name__)
 
-    model_id = f"microsoft/Florence-2-{model}"
+    model_id = f"florence-community/Florence-2-{model}"
     s = server(SERVER_NAME, model_id, not cache_model)
 
     logger.info(f"Starting server with {model_id} (Press CTRL+D to quit)")

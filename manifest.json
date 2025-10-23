@@ -1,5 +1,5 @@
 {
-  "manifest_version": "0.1",
+  "manifest_version": "0.2",
   "name": "mcp-florence2",
   "display_name": "Florence-2 MCP Server",
   "version": "0.3.3",

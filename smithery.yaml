@@ -1,8 +1,0 @@
-# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
-startCommand:
-  type: stdio
-  configSchema:
-    type: object
-    properties: {}
-  commandFunction: |-
-    (config) => ({ command: 'mcp-florence2' }, args: ['--cache-model', '--model', 'base'])

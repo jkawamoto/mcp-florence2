@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "mcp-florence2",
   "display_name": "Florence-2 MCP Server",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "An MCP server for processing images using Florence-2",
   "author": {
     "name": "Junpei Kawamoto",

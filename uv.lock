@@ -452,7 +452,6 @@ name = "mcp-florence2"
 version = "0.3.4"
 source = { editable = "." }
 dependencies = [
-    { name = "click" },
     { name = "dill" },
     { name = "einops" },
     { name = "mcp" },
@@ -477,7 +476,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "click", specifier = "<8.3" },
     { name = "dill", specifier = ">=0.3.9" },
     { name = "einops", specifier = ">=0.8.1" },
     { name = "mcp", specifier = ">=1.14" },

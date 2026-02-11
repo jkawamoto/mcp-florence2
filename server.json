@@ -7,13 +7,13 @@
     "url": "https://github.com/jkawamoto/mcp-florence2",
     "source": "github"
   },
-  "version": "0.3.5",
+  "version": "0.3.6",
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/jkawamoto/mcp-florence2/releases/download/v0.3.5/mcp-florence2.mcpb",
+      "identifier": "https://github.com/jkawamoto/mcp-florence2/releases/download/v0.3.6/mcp-florence2.mcpb",
       "fileSha256": "",
-      "version": "0.3.5",
+      "version": "0.3.6",
       "transport": {
         "type": "stdio"
       }

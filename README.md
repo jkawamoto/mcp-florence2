@@ -14,10 +14,13 @@ Recognition) or generate descriptive captions summarizing the content of the ima
 
 ## Installation
 
-### For Claude Desktop
+### [Claude](https://claude.com/download)
 Download the latest MCP bundle `mcp-florence2.mcpb` from
 the [Releases](https://github.com/jkawamoto/mcp-florence2/releases) page,
 then open the downloaded `.mcpb `file or drag it into the Claude Desktop's Settings window.
+
+<details>
+<summary>Manually configuration</summary>
 
 You can also manually configure this server for Claude Desktop.
 Edit the `claude_desktop_config.json` file by adding the following entry under `mcpServers`:
@@ -38,39 +41,39 @@ Edit the `claude_desktop_config.json` file by adding the following entry under `
 ```
 
 After editing, restart the application.
+
+</details>
+
 For more information,
-see: [For Claude Desktop Users - Model Context Protocol](https://modelcontextprotocol.io/quickstart/user).
+see: [Connect to local MCP servers - Model Context Protocol](https://modelcontextprotocol.io/docs/develop/connect-local-servers).
 
-### For Goose CLI
+### [goose](https://block.github.io/goose/)
+Open this link
+```
+goose://extension?cmd=uvx&arg=--from&arg=git%2Bhttps%3A%2F%2Fgithub.com%2Fjkawamoto%2Fmcp-florence2&arg=mcp-florence2&id=florence2&name=Florence-2&description=An%20MCP%20server%20for%20processing%20images%20using%20Florence-2
+```
+to launch the installer, then click "Yes" to confirm the installation.
 
-To enable the Bear extension in Goose CLI,
-edit the configuration file `~/.config/goose/config.yaml` to include the following entry:
+<details>
+<summary>Manually configuration</summary>
+
+You can also directly edit the config file (`~/.config/goose/config.yaml`) to include the following entry:
 
 ```yaml
 extensions:
-  bear:
+  florence2:
     name: Florence-2
     cmd: uvx
     args: [ --from, git+https://github.com/jkawamoto/mcp-florence2, mcp-florence2 ]
     enabled: true
     type: stdio
 ```
+</details>
 
-### For Goose Desktop
+For more details on configuring MCP servers in Goose, refer to the documentation:
+[Using Extensions | goose](https://block.github.io/goose/docs/getting-started/using-extensions#mcp-servers).
 
-Add a new extension with the following settings:
-
-- **Type**: Standard IO
-- **ID**: florence-2
-- **Name**: Florence-2
-- **Description**: An MCP server for processing images using Florence-2
-- **Command**: `uvx --from git+https://github.com/jkawamoto/mcp-florence2 mcp-florence2`
-
-For more details on configuring MCP servers in Goose Desktop,
-refer to the documentation:
-[Using Extensions - MCP Servers](https://block.github.io/goose/docs/getting-started/using-extensions#mcp-servers).
-
-### For LM Studio
+### [LM Studio](https://lmstudio.ai/)
 To configure this server for LM Studio, click the button below.
 
 [![Add MCP Server florence-2 to LM Studio](https://files.lmstudio.ai/deeplink/mcp-install-light.svg)](https://lmstudio.ai/install-mcp?name=florence-2&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyItLWZyb20iLCJnaXQraHR0cHM6Ly9naXRodWIuY29tL2prYXdhbW90by9tY3AtZmxvcmVuY2UyIiwibWNwLWZsb3JlbmNlMiJdfQ%3D%3D)

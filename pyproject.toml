@@ -4,7 +4,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "mcp-florence2"
-version = "0.3.7"
+version = "0.3.8"
 description = "An MCP server for processing images using Florence-2"
 readme = "README.md"
 authors = [
@@ -51,8 +51,18 @@ line-length = 120
 [tool.pyproject-fmt]
 indent = 4
 
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+overrides = [ { module = [
+    "dill",
+    "transformers.*",
+    "pypdfium2",
+], ignore_missing_imports = true } ]
+
 [tool.bumpversion]
-current_version = "0.3.7"
+current_version = "0.3.8"
 commit = true
 pre_commit_hooks = [
     "uv sync",
@@ -64,13 +74,3 @@ files = [
     { filename = "server.json", search = '"version": "{current_version}"', replace = '"version": "{new_version}"' },
     { filename = "server.json", search = "download/v{current_version}", replace = "download/v{new_version}" },
 ]
-
-[tool.mypy]
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-overrides = [ { module = [
-    "dill",
-    "transformers.*",
-    "pypdfium2",
-], ignore_missing_imports = true } ]

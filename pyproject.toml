@@ -4,7 +4,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "mcp-florence2"
-version = "0.3.13"
+version = "0.3.14"
 description = "An MCP server for processing images using Florence-2"
 readme = "README.md"
 authors = [
@@ -62,7 +62,7 @@ overrides = [ { module = [
 ], ignore_missing_imports = true } ]
 
 [tool.bumpversion]
-current_version = "0.3.13"
+current_version = "0.3.14"
 commit = true
 files = [
     { replace = 'version = "{new_version}"', filename = "pyproject.toml", search = 'version = "{current_version}"' },

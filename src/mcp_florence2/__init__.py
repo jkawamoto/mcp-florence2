@@ -31,7 +31,7 @@ SERVER_NAME: Final[str] = "Florence2"
 @contextmanager
 def get_images(src: PathLike | str) -> Iterator[list[Image]]:
     """Opens and returns a list of images from a file path or URL."""
-    if isinstance(src, str) and (src.startswith("http://") or src.startswith("https://")):
+    if isinstance(src, str) and src.startswith(("http://", "https://")):
         res = requests.get(src)
         res.raise_for_status()
 

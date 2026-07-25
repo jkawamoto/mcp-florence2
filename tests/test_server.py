@@ -1,6 +1,6 @@
 #  test_server.py
 #
-#  Copyright (c) 2025 Junpei Kawamoto
+#  Copyright (c) 2025-2026 Junpei Kawamoto
 #
 #  This software is released under the MIT License.
 #
@@ -19,7 +19,9 @@ from mcp.types import TextContent
 SAMPLE_IMAGE_FILEPATH = os.path.join(os.path.dirname(__file__), "sample.jpg")
 SAMPLE_PDF_FILEPATH = os.path.join(os.path.dirname(__file__), "sample.pdf")
 
-SERVER_PARAMS = StdioServerParameters(command="uv", args=["run", "mcp-florence2", "--cache-model", "--model", "base"])
+SERVER_PARAMS = StdioServerParameters(
+    command="uv", args=["run", "mcp-florence2", "--cache-model", "--model", "florence-community/Florence-2-base"]
+)
 
 
 @pytest.fixture(scope="module")

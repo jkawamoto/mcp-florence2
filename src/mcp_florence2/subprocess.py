@@ -1,26 +1,22 @@
 #  subprocess.py
 #
-#  Copyright (c) 2025 Junpei Kawamoto
+#  Copyright (c) 2025-2026 Junpei Kawamoto
 #
 #  This software is released under the MIT License.
 #
 #  http://opensource.org/licenses/mit-license.php
-
 from __future__ import annotations
 
 from collections.abc import Callable
 from contextlib import closing
 from functools import wraps
 from multiprocessing import Process, SimpleQueue
-from typing import Any, Generic, ParamSpec, TypeVar
+from typing import Any
 
 import dill
 
-T = TypeVar("T")
-P = ParamSpec("P")
 
-
-class Target(Generic[T, P]):
+class Target[T, **P]:
     f: Callable[P, T]
     queue: SimpleQueue[T]
 
@@ -42,7 +38,7 @@ class Target(Generic[T, P]):
         self.__dict__.update(state)
 
 
-def subprocess(f: Callable[P, T]) -> Callable[P, T]:
+def subprocess[**P, T](f: Callable[P, T]) -> Callable[P, T]:
     """Wraps a function to execute it in a subprocess.
 
     The target function will be run

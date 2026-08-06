@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
 from os import PathLike
-from typing import Final, Protocol
+from typing import Annotated, Final, Protocol
 
 import requests
 from mcp.server.mcpserver import Context, MCPServer
@@ -113,7 +113,9 @@ def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
     @mcp.tool()
     def ocr(
         ctx: Context[AppContext],
-        src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
+        src: Annotated[
+            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+        ],
     ) -> list[str]:
         """Process an image file or URL using OCR to extract text."""
         with get_images(src) as images:
@@ -122,7 +124,9 @@ def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
     @mcp.tool()
     def caption(
         ctx: Context[AppContext],
-        src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
+        src: Annotated[
+            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+        ],
     ) -> list[str]:
         """Processes an image file and generates captions for the image."""
         with get_images(src) as images:

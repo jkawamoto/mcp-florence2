@@ -60,7 +60,7 @@ def static_file_server() -> Generator[str, None, None]:
 @pytest.mark.anyio
 async def test_list_tools(mcp_client_session: ClientSession) -> None:
     res = await mcp_client_session.list_tools()
-    tools = set(tool.name for tool in res.tools)
+    tools = {tool.name for tool in res.tools}
 
     assert "caption" in tools
     assert "ocr" in tools

@@ -5,24 +5,23 @@
 #  This software is released under the MIT License.
 #
 #  http://opensource.org/licenses/mit-license.php
-from typing import Final
-
-
 import os
-from contextlib import asynccontextmanager, contextmanager, closing, ExitStack
+from collections.abc import AsyncIterator, Iterator
+from contextlib import ExitStack, asynccontextmanager, closing, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
 from os import PathLike
-from typing import Protocol, AsyncIterator, Iterator
+from typing import Annotated, Final, Protocol
 
 import requests
-from PIL.Image import Image, open as open_image
-from mcp.server.mcpserver import MCPServer, Context
+from mcp.server.mcpserver import Context, MCPServer
+from PIL.Image import Image
+from PIL.Image import open as open_image
 from pydantic import Field
 from pypdfium2 import PdfDocument
 
-from mcp_florence2.florence2 import Florence2, Florence2SP, CaptionLevel
+from mcp_florence2.florence2 import CaptionLevel, Florence2, Florence2SP
 
 SERVER_NAME: Final[str] = "Florence2"
 
@@ -35,7 +34,6 @@ def get_images(src: PathLike | str) -> Iterator[list[Image]]:
         res.raise_for_status()
 
         if res.headers["Content-Type"] == "application/pdf":
-            pass
             with ExitStack() as stack:
                 images = []
                 with closing(PdfDocument(res.content)) as doc:
@@ -115,7 +113,9 @@ def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
     @mcp.tool()
     def ocr(
         ctx: Context[AppContext],
-        src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
+        src: Annotated[
+            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+        ],
     ) -> list[str]:
         """Process an image file or URL using OCR to extract text."""
         with get_images(src) as images:
@@ -124,7 +124,9 @@ def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
     @mcp.tool()
     def caption(
         ctx: Context[AppContext],
-        src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
+        src: Annotated[
+            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+        ],
     ) -> list[str]:
         """Processes an image file and generates captions for the image."""
         with get_images(src) as images:

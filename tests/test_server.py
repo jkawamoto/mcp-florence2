@@ -8,13 +8,14 @@
 import os
 import socketserver
 import threading
+from collections.abc import AsyncGenerator, Generator
 from functools import partial
 from http import server
 from pathlib import Path
-from typing import AsyncGenerator, Generator, cast
+from typing import cast
 
 import pytest
-from mcp import StdioServerParameters, ClientSession, stdio_client
+from mcp import ClientSession, StdioServerParameters, stdio_client
 from mcp.types import TextContent
 
 TEST_DIR = Path(__file__).resolve().parent
@@ -33,10 +34,9 @@ def anyio_backend() -> str:
 
 @pytest.fixture(scope="module")
 async def mcp_client_session() -> AsyncGenerator[ClientSession, None]:
-    async with stdio_client(SERVER_PARAMS) as streams:
-        async with ClientSession(streams[0], streams[1]) as session:
-            await session.initialize()
-            yield session
+    async with stdio_client(SERVER_PARAMS) as streams, ClientSession(streams[0], streams[1]) as session:
+        await session.initialize()
+        yield session
 
 
 @pytest.fixture(scope="module")
@@ -60,7 +60,7 @@ def static_file_server() -> Generator[str, None, None]:
 @pytest.mark.anyio
 async def test_list_tools(mcp_client_session: ClientSession) -> None:
     res = await mcp_client_session.list_tools()
-    tools = set(tool.name for tool in res.tools)
+    tools = {tool.name for tool in res.tools}
 
     assert "caption" in tools
     assert "ocr" in tools

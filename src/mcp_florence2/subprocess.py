@@ -8,10 +8,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from contextlib import closing
 from functools import wraps
 from multiprocessing import Process, SimpleQueue
-from typing import Any, Callable, Generic, TypeVar, ParamSpec
+from typing import Any, Generic, ParamSpec, TypeVar
 
 import dill
 

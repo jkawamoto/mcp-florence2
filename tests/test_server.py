@@ -10,14 +10,16 @@ import socketserver
 import threading
 from functools import partial
 from http import server
+from pathlib import Path
 from typing import AsyncGenerator, Generator, cast
 
 import pytest
 from mcp import StdioServerParameters, ClientSession, stdio_client
 from mcp.types import TextContent
 
-SAMPLE_IMAGE_FILEPATH = os.path.join(os.path.dirname(__file__), "sample.jpg")
-SAMPLE_PDF_FILEPATH = os.path.join(os.path.dirname(__file__), "sample.pdf")
+TEST_DIR = Path(__file__).resolve().parent
+SAMPLE_IMAGE_FILEPATH = str(TEST_DIR / "sample.jpg")
+SAMPLE_PDF_FILEPATH = str(TEST_DIR / "sample.pdf")
 
 SERVER_PARAMS = StdioServerParameters(
     command="uv", args=["run", "mcp-florence2", "--cache-model", "--model", "florence-community/Florence-2-base"]
@@ -73,7 +75,7 @@ async def test_caption(mcp_client_session: ClientSession) -> None:
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error
 
 
 @pytest.mark.anyio
@@ -85,7 +87,7 @@ async def test_caption_url(mcp_client_session: ClientSession, static_file_server
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error
 
 
 @pytest.mark.anyio
@@ -97,7 +99,7 @@ async def test_caption_pdf(mcp_client_session: ClientSession) -> None:
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error
 
 
 @pytest.mark.anyio
@@ -109,7 +111,7 @@ async def test_caption_pdf_from_web(mcp_client_session: ClientSession, static_fi
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error
 
 
 @pytest.mark.anyio
@@ -121,7 +123,7 @@ async def test_ocr(mcp_client_session: ClientSession) -> None:
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error
 
 
 @pytest.mark.anyio
@@ -133,7 +135,7 @@ async def test_ocr_url(mcp_client_session: ClientSession, static_file_server: st
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error
 
 
 @pytest.mark.anyio
@@ -145,7 +147,7 @@ async def test_ocr_pdf(mcp_client_session: ClientSession) -> None:
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error
 
 
 @pytest.mark.anyio
@@ -157,4 +159,4 @@ async def test_ocr_pdf_from_web(mcp_client_session: ClientSession, static_file_s
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 
     assert len(text) > 0
-    assert not res.isError
+    assert not res.is_error

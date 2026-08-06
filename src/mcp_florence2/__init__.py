@@ -1,6 +1,6 @@
 #  __init__.py
 #
-#  Copyright (c) 2025 Junpei Kawamoto
+#  Copyright (c) 2025-2026 Junpei Kawamoto
 #
 #  This software is released under the MIT License.
 #
@@ -18,8 +18,7 @@ from typing import Protocol, AsyncIterator, Iterator
 
 import requests
 from PIL.Image import Image, open as open_image
-from mcp.server import FastMCP
-from mcp.server.fastmcp import Context
+from mcp.server.mcpserver import MCPServer, Context
 from pydantic import Field
 from pypdfium2 import PdfDocument
 
@@ -99,7 +98,7 @@ class AppContext:
 
 
 @asynccontextmanager
-async def app_lifespan(_server: FastMCP, model_id: str, subprocess: bool) -> AsyncIterator[AppContext]:
+async def app_lifespan(_server: MCPServer, model_id: str, subprocess: bool) -> AsyncIterator[AppContext]:
     """Context manager for the FastMCP app lifespan."""
     processor: Processor
     if subprocess:
@@ -109,29 +108,27 @@ async def app_lifespan(_server: FastMCP, model_id: str, subprocess: bool) -> Asy
     yield AppContext(processor)
 
 
-def server(name: str, model_id: str, subprocess: bool = True) -> FastMCP:
+def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
     """Creates a new FastMCP server instance with the specified name and model ID."""
-    mcp = FastMCP(name, lifespan=partial(app_lifespan, model_id=model_id, subprocess=subprocess))
+    mcp = MCPServer(name, lifespan=partial(app_lifespan, model_id=model_id, subprocess=subprocess))
 
     @mcp.tool()
     def ocr(
-        ctx: Context,
+        ctx: Context[AppContext],
         src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
     ) -> list[str]:
         """Process an image file or URL using OCR to extract text."""
         with get_images(src) as images:
-            app_ctx: AppContext = ctx.request_context.lifespan_context
-            return app_ctx.processor.ocr(images)
+            return ctx.request_context.lifespan_context.processor.ocr(images)
 
     @mcp.tool()
     def caption(
-        ctx: Context,
+        ctx: Context[AppContext],
         src: PathLike | str = Field(description="A file path or URL to the image file that needs to be processed."),
     ) -> list[str]:
         """Processes an image file and generates captions for the image."""
         with get_images(src) as images:
-            app_ctx: AppContext = ctx.request_context.lifespan_context
-            return app_ctx.processor.caption(images, CaptionLevel.MORE_DETAILED)
+            return ctx.request_context.lifespan_context.processor.caption(images, CaptionLevel.MORE_DETAILED)
 
     return mcp
 

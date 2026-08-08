@@ -96,6 +96,15 @@ Processes an image file and generates captions for the image.
 
 - **src**: A file path or URL to the image file that needs to be processed.
 
+### process
+
+Processes an image file with a custom prompt using the Florence-2 model.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+- **prompt**: A custom prompt for the Florence-2 model.
+
 ## License
 
 This application is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

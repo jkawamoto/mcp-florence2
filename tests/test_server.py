@@ -64,6 +64,7 @@ async def test_list_tools(mcp_client_session: ClientSession) -> None:
 
     assert "caption" in tools
     assert "ocr" in tools
+    assert "process" in tools
 
 
 @pytest.mark.anyio
@@ -155,6 +156,54 @@ async def test_ocr_pdf_from_web(mcp_client_session: ClientSession, static_file_s
     res = await mcp_client_session.call_tool(
         "ocr",
         arguments={"src": static_file_server + "/sample.pdf"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_process(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH, "prompt": "<CAPTION>"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_process_url(mcp_client_session: ClientSession, static_file_server: str) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": static_file_server + "/sample.jpg", "prompt": "<CAPTION>"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_process_pdf(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": SAMPLE_PDF_FILEPATH, "prompt": "<CAPTION>"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_process_pdf_from_web(mcp_client_session: ClientSession, static_file_server: str) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": static_file_server + "/sample.pdf", "prompt": "<CAPTION>"},
     )
     text = "\n".join(cast(TextContent, c).text for c in res.content)
 

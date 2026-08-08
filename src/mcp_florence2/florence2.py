@@ -1,6 +1,6 @@
 #  florence2.py
 #
-#  Copyright (c) 2025 Junpei Kawamoto
+#  Copyright (c) 2025-2026 Junpei Kawamoto
 #
 #  This software is released under the MIT License.
 #
@@ -92,3 +92,7 @@ class Florence2SP:
     @subprocess
     def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
         return Florence2(self.model_id).caption(images, level)
+
+    @subprocess
+    def generate(self, prompt: str, images: list[Image]) -> list[str]:
+        return Florence2(self.model_id).generate(prompt, images)

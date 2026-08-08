@@ -156,6 +156,19 @@ def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
         with get_images(src) as images:
             return ctx.request_context.lifespan_context.processor.caption(images, CaptionLevel.MORE_DETAILED)
 
+    @mcp.tool()
+    def process(
+        ctx: Context[AppContext],
+        src: Annotated[
+            os.PathLike[str] | str,
+            Field(description="A file path or URL to the image file that needs to be processed."),
+        ],
+        prompt: Annotated[str, Field(description="A custom prompt for the Florence-2 model.")],
+    ) -> list[str]:
+        """Processes an image file with a custom prompt using the Florence-2 model."""
+        with get_images(src) as images:
+            return ctx.request_context.lifespan_context.processor.generate(prompt, images)
+
     return mcp
 
 

@@ -88,6 +88,27 @@ class Processor(Protocol):
         """
         ...
 
+    def generate(self, prompt: str, images: list[Image]) -> list[str]:
+        """Generates text responses for the given images based on a custom prompt.
+
+        This function processes a list of images using the Florence-2 model with
+        a custom prompt string. It allows for flexible image analysis by accepting
+        task-specific prompts that define what information to extract or generate
+        from the images.
+
+        Args:
+            prompt: A task prompt string that specifies the operation to perform
+                on the images (e.g., "<OCR>", "<CAPTION>", or custom task prompts
+                supported by the Florence-2 model).
+            images: A list of PIL Image objects to be processed.
+
+        Returns:
+            A list of strings containing the generated text for each image, where
+            each string corresponds to the model's response for the respective
+            input image.
+        """
+        ...
+
 
 @dataclass
 class AppContext:

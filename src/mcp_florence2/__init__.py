@@ -11,7 +11,7 @@ from contextlib import ExitStack, asynccontextmanager, closing, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
-from os import PathLike
+from pathlib import Path
 from typing import Annotated, Final, Protocol
 
 import requests
@@ -27,7 +27,7 @@ SERVER_NAME: Final[str] = "Florence2"
 
 
 @contextmanager
-def get_images(src: PathLike | str) -> Iterator[list[Image]]:
+def get_images(src: os.PathLike[str] | str) -> Iterator[list[Image]]:
     """Opens and returns a list of images from a file path or URL."""
     if isinstance(src, str) and src.startswith(("http://", "https://")):
         res = requests.get(src)
@@ -46,16 +46,17 @@ def get_images(src: PathLike | str) -> Iterator[list[Image]]:
                 yield [image]
 
     else:
-        ext = os.path.splitext(src)[1].lower()
+        path = Path(src)
+        ext = os.path.splitext(path)[1].lower()
         if ext == ".pdf":
             with ExitStack() as stack:
                 images = []
-                with closing(PdfDocument(src)) as doc:
+                with closing(PdfDocument(path)) as doc:
                     for page in doc:
                         images.append(stack.enter_context(page.render().to_pil()))
                 yield images
         else:
-            with open_image(src) as image:
+            with open_image(path) as image:
                 yield [image]
 
 
@@ -114,7 +115,8 @@ def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
     def ocr(
         ctx: Context[AppContext],
         src: Annotated[
-            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+            os.PathLike[str] | str,
+            Field(description="A file path or URL to the image file that needs to be processed."),
         ],
     ) -> list[str]:
         """Process an image file or URL using OCR to extract text."""
@@ -125,7 +127,8 @@ def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
     def caption(
         ctx: Context[AppContext],
         src: Annotated[
-            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+            os.PathLike[str] | str,
+            Field(description="A file path or URL to the image file that needs to be processed."),
         ],
     ) -> list[str]:
         """Processes an image file and generates captions for the image."""

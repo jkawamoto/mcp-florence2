@@ -5,7 +5,7 @@ requires = [ "hatchling" ]
 [project]
 name = "mcp-florence2"
 version = "0.4.0"
-description = "An MCP server for processing images using Florence-2"
+description = "An MCP server for processing images using Florence-2 and Moondream2"
 readme = "README.md"
 authors = [
     { name = "Junpei Kawamoto", email = "kawamoto.junpei.s64@kyoto-u.jp" },
@@ -27,11 +27,19 @@ dependencies = [
     "pillow>=11.3",
     "pydantic>=2.11.9",
     "pypdfium2>=4.30",
+    # Required by vikhyatk/moondream2's trust_remote_code module, not by this package
+    # directly. The [binary] extra ships the libvips shared libraries in the wheel, so no
+    # system-wide libvips install or PATH entry is needed.
+    "pyvips[binary]>=2.2",
     "requests>=2.32.3",
     "rich-click>=1.8.8",
     "timm>=1.0.15",
     "torch>=2.13",
-    "transformers>=4.56",
+    "torchvision>=0.18",
+    # Pinned to the narrow window where Florence2ForConditionalGeneration (added ~4.57) is
+    # native AND vikhyatk/moondream2's trust_remote_code model still loads: transformers 5.x
+    # renamed internals (`all_tied_weights_keys`) that moondream2's HfMoondream class relies on.
+    "transformers>=4.57.2,<5",
 ]
 scripts.mcp-florence2 = "mcp_florence2.cli:main"
 

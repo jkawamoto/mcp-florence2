@@ -7,10 +7,16 @@
 
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/jkawamoto-mcp-florence2-badge.png)](https://mseep.ai/app/jkawamoto-mcp-florence2)
 
-An MCP server for processing images using [Florence-2](https://huggingface.co/microsoft/Florence-2-large).
+An MCP server for processing images using [Florence-2](https://huggingface.co/microsoft/Florence-2-large)
+and [Moondream2](https://huggingface.co/vikhyatk/moondream2).
 
 You can process images or PDF files stored on a local or web server to extract text using OCR (Optical Character
-Recognition) or generate descriptive captions summarizing the content of the images.
+Recognition), generate descriptive captions summarizing the content of the images, locate named objects and
+return their bounding boxes or centre points, caption every salient region, and ask free-form questions about an
+image.
+
+Florence-2 handles captioning, OCR, detection and grounding. Moondream2 backs the `query_image` tool, because
+Florence-2 has no open-ended visual question answering task.
 
 ## Installation
 
@@ -95,6 +101,77 @@ Processes an image file and generates captions for the image.
 #### Arguments:
 
 - **src**: A file path or URL to the image file that needs to be processed.
+
+### detect_objects
+
+Detect instances of a named object in an image, returning bounding boxes and labels.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+- **object_name**: Name of the object to locate, e.g. `person`, `car`, `face`.
+
+### point_objects
+
+Locate instances of a named object in an image, returning the centre coordinates of each match.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+- **object_name**: Name of the object to locate, e.g. `person`, `car`, `face`.
+
+### dense_region_caption
+
+Generate a caption for every salient region of an image, with bounding boxes.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+
+### query_image
+
+Ask a free-form question about an image (visual question answering). Backed by Moondream2.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+- **question**: A free-form question to ask about the image.
+
+### analyze_image
+
+Multi-purpose tool that dispatches to any of the operations above. Useful for agents that would rather choose an
+operation by name than pick between tools.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+- **operation**: One of `caption`, `ocr`, `detect`, `point`, `dense_caption`, `query`.
+- **question**: Required when the operation is `query`.
+- **object_name**: Required when the operation is `detect` or `point`.
+
+### batch_analyze_images
+
+Runs `analyze_image`'s operation over several images. Each image reports its own success or failure, so one bad
+file does not abort the batch.
+
+#### Arguments:
+
+- **srcs**: File paths or URLs of the images to process.
+- **operation**: One of `caption`, `ocr`, `detect`, `point`, `dense_caption`, `query`.
+- **question**: Required when the operation is `query`.
+- **object_name**: Required when the operation is `detect` or `point`.
+
+## Options
+
+- **--model**: The Florence-2 model used for captioning, OCR, detection and grounding.
+- **--cache-model**: Keep the Florence-2 model loaded between requests instead of running each one in a fresh
+  subprocess.
+- **--moondream-model** / **--moondream-revision**: The Moondream2 model and revision backing `query_image`.
+- **--idle-timeout**: Minutes of inactivity after which both models are unloaded and their memory released; they
+  reload automatically on the next request. `0`, the default, keeps them loaded for the lifetime of the server.
+
+The models are large, so a server left running holds several gigabytes of memory. Setting `--idle-timeout 10`
+keeps repeat calls fast during a burst of work while handing the memory back once the work stops.
 
 ## License
 

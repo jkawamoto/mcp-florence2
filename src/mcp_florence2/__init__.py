@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
 from os import PathLike
-from typing import Annotated, Final, Protocol
+from typing import Annotated, Any, Final, Protocol, cast
 
 import requests
 from mcp.server.mcpserver import Context, MCPServer
@@ -22,6 +22,8 @@ from pydantic import Field
 from pypdfium2 import PdfDocument
 
 from mcp_florence2.florence2 import CaptionLevel, Florence2, Florence2SP
+from mcp_florence2.idle import IdleProxy, IdleReleased
+from mcp_florence2.moondream import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, Moondream
 
 SERVER_NAME: Final[str] = "Florence2"
 
@@ -87,52 +89,206 @@ class Processor(Protocol):
         """
         ...
 
+    def detect_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
+        """Locates instances of the named object, returning bounding boxes and labels."""
+        ...
+
+    def point_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
+        """Locates instances of the named object, returning center points and labels."""
+        ...
+
+    def dense_region_caption(self, images: list[Image]) -> list[dict[str, Any]]:
+        """Generates a caption for every salient region in the image, with bounding boxes."""
+        ...
+
+
+class VqaProcessor(Protocol):
+    """Represents a protocol for free-form visual question answering (VQA)."""
+
+    def query(self, images: list[Image], question: str) -> list[str]:
+        """Answers a free-form question about each image."""
+        ...
+
 
 @dataclass
 class AppContext:
     """Context for the FastMCP app."""
 
     processor: Processor
+    vqa: VqaProcessor
 
 
 @asynccontextmanager
-async def app_lifespan(_server: MCPServer, model_id: str, subprocess: bool) -> AsyncIterator[AppContext]:
+async def app_lifespan(
+    _server: MCPServer,
+    model_id: str,
+    subprocess: bool,
+    moondream_model_id: str,
+    moondream_revision: str,
+    idle_timeout: float = 0,
+) -> AsyncIterator[AppContext]:
     """Context manager for the FastMCP app lifespan."""
     processor: Processor
-    if subprocess:
-        processor = Florence2SP(model_id)
+    vqa: VqaProcessor
+    if idle_timeout > 0:
+        # Keep both models in this process so repeat calls stay fast, and let the
+        # idle timer hand their memory back once the work stops.
+        processor = cast(
+            Processor,
+            IdleProxy(IdleReleased(lambda: Florence2(model_id), idle_timeout, "Florence-2")),
+        )
+        vqa = cast(
+            VqaProcessor,
+            IdleProxy(
+                IdleReleased(
+                    lambda: Moondream(moondream_model_id, moondream_revision),
+                    idle_timeout,
+                    "Moondream",
+                )
+            ),
+        )
     else:
-        processor = Florence2(model_id)
-    yield AppContext(processor)
+        if subprocess:
+            processor = Florence2SP(model_id)
+        else:
+            processor = Florence2(model_id)
+        vqa = Moondream(moondream_model_id, moondream_revision)
+    yield AppContext(processor, vqa)
 
 
-def server(name: str, model_id: str, subprocess: bool = True) -> MCPServer:
+def server(
+    name: str,
+    model_id: str,
+    subprocess: bool = True,
+    moondream_model_id: str = DEFAULT_MOONDREAM_MODEL,
+    moondream_revision: str = DEFAULT_MOONDREAM_REVISION,
+    idle_timeout: float = 0,
+) -> MCPServer:
     """Creates a new FastMCP server instance with the specified name and model ID."""
-    mcp = MCPServer(name, lifespan=partial(app_lifespan, model_id=model_id, subprocess=subprocess))
+    mcp = MCPServer(
+        name,
+        lifespan=partial(
+            app_lifespan,
+            model_id=model_id,
+            subprocess=subprocess,
+            moondream_model_id=moondream_model_id,
+            moondream_revision=moondream_revision,
+            idle_timeout=idle_timeout,
+        ),
+    )
+
+    ImagePath = Annotated[
+        PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+    ]
+    ObjectName = Annotated[str, Field(description="Name of the object to locate, e.g. 'person', 'car', 'face'.")]
 
     @mcp.tool()
-    def ocr(
-        ctx: Context[AppContext],
-        src: Annotated[
-            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
-        ],
-    ) -> list[str]:
+    def ocr(ctx: Context[AppContext], src: ImagePath) -> list[str]:
         """Process an image file or URL using OCR to extract text."""
         with get_images(src) as images:
             return ctx.request_context.lifespan_context.processor.ocr(images)
 
     @mcp.tool()
-    def caption(
-        ctx: Context[AppContext],
-        src: Annotated[
-            PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
-        ],
-    ) -> list[str]:
+    def caption(ctx: Context[AppContext], src: ImagePath) -> list[str]:
         """Processes an image file and generates captions for the image."""
         with get_images(src) as images:
             return ctx.request_context.lifespan_context.processor.caption(images, CaptionLevel.MORE_DETAILED)
 
+    @mcp.tool()
+    def detect_objects(ctx: Context[AppContext], src: ImagePath, object_name: ObjectName) -> list[dict[str, Any]]:
+        """Detect instances of a named object in an image, returning bounding boxes."""
+        with get_images(src) as images:
+            return ctx.request_context.lifespan_context.processor.detect_objects(images, object_name)
+
+    @mcp.tool()
+    def point_objects(ctx: Context[AppContext], src: ImagePath, object_name: ObjectName) -> list[dict[str, Any]]:
+        """Locate instances of a named object in an image, returning center coordinates."""
+        with get_images(src) as images:
+            return ctx.request_context.lifespan_context.processor.point_objects(images, object_name)
+
+    @mcp.tool()
+    def dense_region_caption(ctx: Context[AppContext], src: ImagePath) -> list[dict[str, Any]]:
+        """Generate a caption for every salient region of an image, with bounding boxes."""
+        with get_images(src) as images:
+            return ctx.request_context.lifespan_context.processor.dense_region_caption(images)
+
+    @mcp.tool()
+    def query_image(
+        ctx: Context[AppContext],
+        src: ImagePath,
+        question: Annotated[str, Field(description="A free-form question to ask about the image.")],
+    ) -> list[str]:
+        """Ask a free-form question about an image (visual question answering)."""
+        with get_images(src) as images:
+            return ctx.request_context.lifespan_context.vqa.query(images, question)
+
+    @mcp.tool()
+    def analyze_image(
+        ctx: Context[AppContext],
+        src: ImagePath,
+        operation: Annotated[
+            str, Field(description="One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'.")
+        ],
+        question: Annotated[str, Field(description="Required when operation is 'query'.")] = "",
+        object_name: Annotated[str, Field(description="Required when operation is 'detect' or 'point'.")] = "",
+    ) -> Any:
+        """Multi-purpose image analysis tool dispatching to caption/ocr/detect/point/dense_caption/query."""
+        with get_images(src) as images:
+            return _dispatch(
+                ctx.request_context.lifespan_context, operation, images, question=question, object_name=object_name
+            )
+
+    @mcp.tool()
+    def batch_analyze_images(
+        ctx: Context[AppContext],
+        srcs: Annotated[list[PathLike | str], Field(description="File paths or URLs of the images to process.")],
+        operation: Annotated[
+            str, Field(description="One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'.")
+        ],
+        question: Annotated[str, Field(description="Required when operation is 'query'.")] = "",
+        object_name: Annotated[str, Field(description="Required when operation is 'detect' or 'point'.")] = "",
+    ) -> list[dict[str, Any]]:
+        """Runs analyze_image's operation over multiple images, reporting per-image success/failure."""
+        results = []
+        for src in srcs:
+            try:
+                with get_images(src) as images:
+                    result = _dispatch(
+                        ctx.request_context.lifespan_context,
+                        operation,
+                        images,
+                        question=question,
+                        object_name=object_name,
+                    )
+                results.append({"src": str(src), "success": True, "result": result})
+            except Exception as e:  # noqa: BLE001 - reported per-image, batch must continue
+                results.append({"src": str(src), "success": False, "error": str(e)})
+        return results
+
     return mcp
+
+
+def _dispatch(app: AppContext, operation: str, images: list[Image], *, question: str, object_name: str) -> Any:
+    """Routes an `analyze_image`/`batch_analyze_images` operation to the right processor call."""
+    if operation == "caption":
+        return app.processor.caption(images, CaptionLevel.MORE_DETAILED)
+    if operation == "ocr":
+        return app.processor.ocr(images)
+    if operation == "detect":
+        if not object_name:
+            raise ValueError("object_name is required for the 'detect' operation")
+        return app.processor.detect_objects(images, object_name)
+    if operation == "point":
+        if not object_name:
+            raise ValueError("object_name is required for the 'point' operation")
+        return app.processor.point_objects(images, object_name)
+    if operation == "dense_caption":
+        return app.processor.dense_region_caption(images)
+    if operation == "query":
+        if not question:
+            raise ValueError("question is required for the 'query' operation")
+        return app.vqa.query(images, question)
+    raise ValueError(f"Unknown operation: {operation!r}")
 
 
 __all__: Final = ["SERVER_NAME", "server"]

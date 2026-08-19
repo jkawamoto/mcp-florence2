@@ -53,7 +53,28 @@ class Florence2:
     def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
         return self.generate(str(level.value), images)
 
+    def detect_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
+        return self.generate_structured("<CAPTION_TO_PHRASE_GROUNDING>", images, text=object_name)
+
+    def point_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
+        grounded = self.generate_structured("<CAPTION_TO_PHRASE_GROUNDING>", images, text=object_name)
+        return [_bboxes_to_points(region) for region in grounded]
+
+    def dense_region_caption(self, images: list[Image]) -> list[dict[str, Any]]:
+        return self.generate_structured("<DENSE_REGION_CAPTION>", images)
+
     def generate(self, prompt: str, images: list[Image]) -> list[str]:
+        res = []
+        for parsed in self._run(prompt, images):
+            res.append(parsed.strip())
+        return res
+
+    def generate_structured(self, task: str, images: list[Image], text: str | None = None) -> list[dict[str, Any]]:
+        prompt = task if text is None else task + text
+        return list(self._run(prompt, images, task=task))
+
+    def _run(self, prompt: str, images: list[Image], task: str | None = None) -> list[Any]:
+        task = task or prompt
         res = []
         for img in images:
             with img.convert("RGB") as rgb_img:
@@ -71,12 +92,18 @@ class Florence2:
                 generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
 
                 parsed_answer = self.processor.post_process_generation(
-                    generated_text, task=prompt, image_size=(rgb_img.width, rgb_img.height)
+                    generated_text, task=task, image_size=(rgb_img.width, rgb_img.height)
                 )
 
-                res.append(parsed_answer[prompt].strip())
+                res.append(parsed_answer[task])
 
         return res
+
+
+def _bboxes_to_points(region: dict[str, Any]) -> dict[str, Any]:
+    """Converts a Florence-2 bboxes/labels region result into center-point/labels form."""
+    points = [[(x1 + x2) / 2, (y1 + y2) / 2] for x1, y1, x2, y2 in region.get("bboxes", [])]
+    return {"points": points, "labels": region.get("labels", [])}
 
 
 class Florence2SP:
@@ -92,3 +119,15 @@ class Florence2SP:
     @subprocess
     def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
         return Florence2(self.model_id).caption(images, level)
+
+    @subprocess
+    def detect_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
+        return Florence2(self.model_id).detect_objects(images, object_name)
+
+    @subprocess
+    def point_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
+        return Florence2(self.model_id).point_objects(images, object_name)
+
+    @subprocess
+    def dense_region_caption(self, images: list[Image]) -> list[dict[str, Any]]:
+        return Florence2(self.model_id).dense_region_caption(images)

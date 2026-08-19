@@ -5,6 +5,7 @@
 #  This software is released under the MIT License.
 #
 #  http://opensource.org/licenses/mit-license.php
+import json
 import os
 import socketserver
 import threading
@@ -64,6 +65,12 @@ async def test_list_tools(mcp_client_session: ClientSession) -> None:
 
     assert "caption" in tools
     assert "ocr" in tools
+    assert "detect_objects" in tools
+    assert "point_objects" in tools
+    assert "dense_region_caption" in tools
+    assert "query_image" in tools
+    assert "analyze_image" in tools
+    assert "batch_analyze_images" in tools
 
 
 @pytest.mark.anyio
@@ -160,3 +167,105 @@ async def test_ocr_pdf_from_web(mcp_client_session: ClientSession, static_file_s
 
     assert len(text) > 0
     assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_detect_objects(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "detect_objects",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH, "object_name": "person"},
+    )
+    regions = json.loads("\n".join(cast(TextContent, c).text for c in res.content))
+
+    assert not res.is_error
+    assert "bboxes" in regions
+    assert "labels" in regions
+
+
+@pytest.mark.anyio
+async def test_point_objects(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "point_objects",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH, "object_name": "person"},
+    )
+    regions = json.loads("\n".join(cast(TextContent, c).text for c in res.content))
+
+    assert not res.is_error
+    assert "points" in regions
+    assert "labels" in regions
+    # Points are centres, so each one carries an x and a y.
+    assert all(len(point) == 2 for point in regions["points"])
+
+
+@pytest.mark.anyio
+async def test_dense_region_caption(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "dense_region_caption",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH},
+    )
+    regions = json.loads("\n".join(cast(TextContent, c).text for c in res.content))
+
+    assert not res.is_error
+    assert "bboxes" in regions
+    assert "labels" in regions
+
+
+@pytest.mark.anyio
+async def test_analyze_image_dispatches_to_ocr(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "analyze_image",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH, "operation": "ocr"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert not res.is_error
+    assert len(text) > 0
+
+
+@pytest.mark.anyio
+async def test_analyze_image_rejects_unknown_operation(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "analyze_image",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH, "operation": "translate"},
+    )
+
+    assert res.is_error
+
+
+@pytest.mark.anyio
+async def test_analyze_image_requires_object_name_for_detect(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "analyze_image",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH, "operation": "detect"},
+    )
+
+    assert res.is_error
+
+
+@pytest.mark.anyio
+async def test_batch_analyze_images(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "batch_analyze_images",
+        arguments={"srcs": [SAMPLE_IMAGE_FILEPATH, SAMPLE_IMAGE_FILEPATH], "operation": "ocr"},
+    )
+    results = [json.loads(cast(TextContent, c).text) for c in res.content]
+
+    assert not res.is_error
+    assert len(results) == 2
+    assert all(item["success"] for item in results)
+
+
+@pytest.mark.anyio
+async def test_batch_analyze_images_reports_failures_per_image(mcp_client_session: ClientSession) -> None:
+    missing = str(TEST_DIR / "does-not-exist.jpg")
+    res = await mcp_client_session.call_tool(
+        "batch_analyze_images",
+        arguments={"srcs": [SAMPLE_IMAGE_FILEPATH, missing], "operation": "ocr"},
+    )
+    results = [json.loads(cast(TextContent, c).text) for c in res.content]
+
+    # A bad image must not abort the batch: the good one still reports a result.
+    assert not res.is_error
+    assert results[0]["success"]
+    assert not results[1]["success"]
+    assert results[1]["error"]

@@ -161,6 +161,16 @@ file does not abort the batch.
 - **question**: Required when the operation is `query`.
 - **object_name**: Required when the operation is `detect` or `point`.
 
+### process
+
+Processes an image file with a custom prompt using the Florence-2 model. Useful for Florence-2
+task tokens this server does not expose as their own tool.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+- **prompt**: A custom prompt for the Florence-2 model.
+
 ## Options
 
 - **--model**: The Florence-2 model used for captioning, OCR, detection and grounding.
@@ -172,6 +182,7 @@ file does not abort the batch.
 
 The models are large, so a server left running holds several gigabytes of memory. Setting `--idle-timeout 10`
 keeps repeat calls fast during a burst of work while handing the memory back once the work stops.
+
 
 ## License
 

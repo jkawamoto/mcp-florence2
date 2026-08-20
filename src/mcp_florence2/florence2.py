@@ -1,6 +1,6 @@
 #  florence2.py
 #
-#  Copyright (c) 2025 Junpei Kawamoto
+#  Copyright (c) 2025-2026 Junpei Kawamoto
 #
 #  This software is released under the MIT License.
 #
@@ -131,3 +131,7 @@ class Florence2SP:
     @subprocess
     def dense_region_caption(self, images: list[Image]) -> list[dict[str, Any]]:
         return Florence2(self.model_id).dense_region_caption(images)
+
+    @subprocess
+    def generate(self, prompt: str, images: list[Image]) -> list[str]:
+        return Florence2(self.model_id).generate(prompt, images)

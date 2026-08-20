@@ -71,6 +71,7 @@ async def test_list_tools(mcp_client_session: ClientSession) -> None:
     assert "query_image" in tools
     assert "analyze_image" in tools
     assert "batch_analyze_images" in tools
+    assert "process" in tools
 
 
 @pytest.mark.anyio
@@ -269,3 +270,51 @@ async def test_batch_analyze_images_reports_failures_per_image(mcp_client_sessio
     assert results[0]["success"]
     assert not results[1]["success"]
     assert results[1]["error"]
+
+
+@pytest.mark.anyio
+async def test_process(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": SAMPLE_IMAGE_FILEPATH, "prompt": "<CAPTION>"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_process_url(mcp_client_session: ClientSession, static_file_server: str) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": static_file_server + "/sample.jpg", "prompt": "<CAPTION>"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_process_pdf(mcp_client_session: ClientSession) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": SAMPLE_PDF_FILEPATH, "prompt": "<CAPTION>"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error
+
+
+@pytest.mark.anyio
+async def test_process_pdf_from_web(mcp_client_session: ClientSession, static_file_server: str) -> None:
+    res = await mcp_client_session.call_tool(
+        "process",
+        arguments={"src": static_file_server + "/sample.pdf", "prompt": "<CAPTION>"},
+    )
+    text = "\n".join(cast(TextContent, c).text for c in res.content)
+
+    assert len(text) > 0
+    assert not res.is_error

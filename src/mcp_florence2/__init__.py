@@ -11,7 +11,7 @@ from contextlib import ExitStack, asynccontextmanager, closing, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
-from os import PathLike
+from pathlib import Path
 from typing import Annotated, Any, Final, Protocol, cast
 
 import requests
@@ -29,7 +29,7 @@ SERVER_NAME: Final[str] = "Florence2"
 
 
 @contextmanager
-def get_images(src: PathLike | str) -> Iterator[list[Image]]:
+def get_images(src: os.PathLike[str] | str) -> Iterator[list[Image]]:
     """Opens and returns a list of images from a file path or URL."""
     if isinstance(src, str) and src.startswith(("http://", "https://")):
         res = requests.get(src)
@@ -48,16 +48,17 @@ def get_images(src: PathLike | str) -> Iterator[list[Image]]:
                 yield [image]
 
     else:
-        ext = os.path.splitext(src)[1].lower()
+        path = Path(src)
+        ext = os.path.splitext(path)[1].lower()
         if ext == ".pdf":
             with ExitStack() as stack:
                 images = []
-                with closing(PdfDocument(src)) as doc:
+                with closing(PdfDocument(path)) as doc:
                     for page in doc:
                         images.append(stack.enter_context(page.render().to_pil()))
                 yield images
         else:
-            with open_image(src) as image:
+            with open_image(path) as image:
                 yield [image]
 
 
@@ -99,6 +100,27 @@ class Processor(Protocol):
 
     def dense_region_caption(self, images: list[Image]) -> list[dict[str, Any]]:
         """Generates a caption for every salient region in the image, with bounding boxes."""
+        ...
+
+    def generate(self, prompt: str, images: list[Image]) -> list[str]:
+        """Generates text responses for the given images based on a custom prompt.
+
+        This function processes a list of images using the Florence-2 model with
+        a custom prompt string. It allows for flexible image analysis by accepting
+        task-specific prompts that define what information to extract or generate
+        from the images.
+
+        Args:
+            prompt: A task prompt string that specifies the operation to perform
+                on the images (e.g., "<OCR>", "<CAPTION>", or custom task prompts
+                supported by the Florence-2 model).
+            images: A list of PIL Image objects to be processed.
+
+        Returns:
+            A list of strings containing the generated text for each image, where
+            each string corresponds to the model's response for the respective
+            input image.
+        """
         ...
 
 
@@ -178,9 +200,10 @@ def server(
     )
 
     ImagePath = Annotated[
-        PathLike | str, Field(description="A file path or URL to the image file that needs to be processed.")
+        os.PathLike[str] | str, Field(description="A file path or URL to the image file that needs to be processed.")
     ]
     ObjectName = Annotated[str, Field(description="Name of the object to locate, e.g. 'person', 'car', 'face'.")]
+    CustomPrompt = Annotated[str, Field(description="A custom prompt for the Florence-2 model.")]
 
     @mcp.tool()
     def ocr(ctx: Context[AppContext], src: ImagePath) -> list[str]:
@@ -241,7 +264,9 @@ def server(
     @mcp.tool()
     def batch_analyze_images(
         ctx: Context[AppContext],
-        srcs: Annotated[list[PathLike | str], Field(description="File paths or URLs of the images to process.")],
+        srcs: Annotated[
+            list[os.PathLike[str] | str], Field(description="File paths or URLs of the images to process.")
+        ],
         operation: Annotated[
             str, Field(description="One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'.")
         ],
@@ -264,6 +289,12 @@ def server(
             except Exception as e:  # noqa: BLE001 - reported per-image, batch must continue
                 results.append({"src": str(src), "success": False, "error": str(e)})
         return results
+
+    @mcp.tool()
+    def process(ctx: Context[AppContext], src: ImagePath, prompt: CustomPrompt) -> list[str]:
+        """Processes an image file with a custom prompt using the Florence-2 model."""
+        with get_images(src) as images:
+            return ctx.request_context.lifespan_context.processor.generate(prompt, images)
 
     return mcp
 

@@ -9,7 +9,7 @@ description = "FusionVisionMCP: an MCP server fusing Florence-2 and Moondream2 f
 readme = "README.md"
 authors = [
     { name = "Junpei Kawamoto", email = "kawamoto.junpei.s64@kyoto-u.jp" },
-    { name = "warrens951", email = "warrens951@gmail.com" },
+    { name = "Whoawhen", email = "warrens951@gmail.com" },
 ]
 requires-python = ">=3.12"
 classifiers = [

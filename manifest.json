@@ -6,13 +6,13 @@
   "version": "0.4.0",
   "description": "An MCP server fusing Florence-2 and Moondream2 for image captioning, OCR, object detection/grounding, and visual question answering",
   "author": {
-    "name": "warrens951",
+    "name": "Whoawhen",
     "email": "warrens951@gmail.com",
-    "url": "https://github.com/warrens951"
+    "url": "https://github.com/Whoawhen"
   },
-  "homepage": "https://github.com/warrens951/FusionVisionMCP",
-  "documentation": "https://github.com/warrens951/FusionVisionMCP",
-  "support": "https://github.com/warrens951/FusionVisionMCP/issues",
+  "homepage": "https://github.com/Whoawhen/FusionVisionMCP",
+  "documentation": "https://github.com/Whoawhen/FusionVisionMCP",
+  "support": "https://github.com/Whoawhen/FusionVisionMCP/issues",
   "server": {
     "type": "python",
     "entry_point": "src/fusion_vision_mcp/__main__.py",
@@ -73,6 +73,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/warrens951/FusionVisionMCP"
+    "url": "https://github.com/Whoawhen/FusionVisionMCP"
   }
 }

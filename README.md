@@ -1,9 +1,9 @@
 # FusionVisionMCP
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Python Application](https://github.com/warrens951/FusionVisionMCP/actions/workflows/python-app.yaml/badge.svg)](https://github.com/warrens951/FusionVisionMCP/actions/workflows/python-app.yaml)
+[![Python Application](https://github.com/Whoawhen/FusionVisionMCP/actions/workflows/python-app.yaml/badge.svg)](https://github.com/Whoawhen/FusionVisionMCP/actions/workflows/python-app.yaml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![GitHub License](https://img.shields.io/github/license/warrens951/FusionVisionMCP)](https://github.com/warrens951/FusionVisionMCP/blob/main/LICENSE)
+[![GitHub License](https://img.shields.io/github/license/Whoawhen/FusionVisionMCP)](https://github.com/Whoawhen/FusionVisionMCP/blob/main/LICENSE)
 
 An MCP server fusing [Florence-2](https://huggingface.co/microsoft/Florence-2-large)
 and [Moondream2](https://huggingface.co/vikhyatk/moondream2) into one computer-vision toolset. Fork of
@@ -28,7 +28,7 @@ Florence-2 has no open-ended visual question answering task.
 
 ### [Claude](https://claude.com/download)
 Download the latest MCP bundle `fusion-vision-mcp.mcpb` from
-the [Releases](https://github.com/warrens951/FusionVisionMCP/releases) page,
+the [Releases](https://github.com/Whoawhen/FusionVisionMCP/releases) page,
 then open the downloaded `.mcpb `file or drag it into the Claude Desktop's Settings window.
 
 <details>
@@ -44,7 +44,7 @@ Edit the `claude_desktop_config.json` file by adding the following entry under `
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/warrens951/FusionVisionMCP",
+        "git+https://github.com/Whoawhen/FusionVisionMCP",
         "fusion-vision-mcp"
       ]
     }
@@ -68,7 +68,7 @@ extensions:
   fusionvision:
     name: FusionVisionMCP
     cmd: uvx
-    args: [ --from, git+https://github.com/warrens951/FusionVisionMCP, fusion-vision-mcp ]
+    args: [ --from, git+https://github.com/Whoawhen/FusionVisionMCP, fusion-vision-mcp ]
     enabled: true
     type: stdio
 ```

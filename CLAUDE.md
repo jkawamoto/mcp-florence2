@@ -37,10 +37,10 @@ uv run --with pytest --with anyio pytest tests -q
 
 ## Remotes
 
-`origin` is this fork (`warrens951/FusionVisionMCP`, public, renamed from `warrens951/mcp-florence2` on
-2026-08-20); `upstream` is `jkawamoto/mcp-florence2`. Feature work happens on branches off `main`, which tracks
-`upstream/main` — keep `main` itself a clean mirror of upstream so a PR can be opened from a branch without
-carrying unrelated history.
+`origin` is this fork (`Whoawhen/FusionVisionMCP`, public, renamed from `warrens951/mcp-florence2` on 2026-08-20 —
+both the repo name and the GitHub account username changed that day); `upstream` is `jkawamoto/mcp-florence2`.
+Feature work happens on branches off `main`, which tracks `upstream/main` — keep `main` itself a clean mirror of
+upstream so a PR can be opened from a branch without carrying unrelated history.
 
 ## Two OCR paths — pick by text type, don't default to `ocr`
 

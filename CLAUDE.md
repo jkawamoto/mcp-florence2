@@ -1,10 +1,14 @@
-# mcp-florence2
+# FusionVisionMCP
 
-Fork of [jkawamoto/mcp-florence2](https://github.com/jkawamoto/mcp-florence2), adding Moondream2 VQA, object grounding (`detect_objects`, `point_objects`, `dense_region_caption`), batch analysis, and an `--idle-timeout` that releases model memory after a period of inactivity. See [README.md](README.md) for the tool and option reference.
+Fork of [jkawamoto/mcp-florence2](https://github.com/jkawamoto/mcp-florence2), renamed and rebranded as
+**FusionVisionMCP** (Python package `fusion-vision-mcp`, module `fusion_vision_mcp`, binary
+`fusion-vision-mcp.exe`), adding Moondream2 VQA, object grounding (`detect_objects`, `point_objects`,
+`dense_region_caption`), batch analysis, and an `--idle-timeout` that releases model memory after a period of
+inactivity. See [README.md](README.md) for the tool and option reference.
 
 ## This is an editable install — checking out a branch changes the running server
 
-`mcp-florence2` is installed as an editable `uv` tool pointing at this checkout (`uv tool install --editable . --force ...`). The MCP server both Cline and Claude Code run **is whatever branch is checked out here**, live, with no reinstall needed to pick up source changes.
+`fusion-vision-mcp` is installed as an editable `uv` tool pointing at this checkout (`uv tool install --editable . --force ...`). The MCP server both Cline and Claude Code run **is whatever branch is checked out here**, live, with no reinstall needed to pick up source changes.
 
 This bit us once already: checking out `main` to catch up with upstream silently removed `--idle-timeout` and the Moondream tools from the running server, and it came back as `✘ Failed to connect` in both clients because `main` doesn't accept `--idle-timeout`. Always confirm you're on `feature/moondream-vqa-and-idle-release` (or a later feature branch) before assuming the server has this fork's tools, and re-run `uv tool install --editable . --force ...` after any change to `pyproject.toml` — source edits are live immediately, but dependency changes are not until reinstalled.
 
@@ -33,11 +37,14 @@ uv run --with pytest --with anyio pytest tests -q
 
 ## Remotes
 
-`origin` is this fork (`warrens951/mcp-florence2`, public); `upstream` is `jkawamoto/mcp-florence2`. Feature work happens on branches off `main`, which tracks `upstream/main` — keep `main` itself a clean mirror of upstream so a PR can be opened from a branch without carrying unrelated history.
+`origin` is this fork (`warrens951/FusionVisionMCP`, public, renamed from `warrens951/mcp-florence2` on
+2026-08-20); `upstream` is `jkawamoto/mcp-florence2`. Feature work happens on branches off `main`, which tracks
+`upstream/main` — keep `main` itself a clean mirror of upstream so a PR can be opened from a branch without
+carrying unrelated history.
 
 ## Two OCR paths — pick by text type, don't default to `ocr`
 
-`ocr` (Florence2's `<OCR>` head) and `query_image` (Moondream2 VQA, asked to transcribe) both read text, but they fail differently, so route by what the text looks like rather than always reaching for `ocr`:
+`ocr` (Florence2's `<OCR>` head) and `query_image` (Moondream2 VQA, asked to transcribe) both read text, but they fail differently, so route by what the text looks like rather than always reaching for `ocr`. This is now stated directly in both tools' MCP descriptions (see `src/fusion_vision_mcp/__init__.py`), since a calling agent reads those at tool-selection time, not this file:
 
 - **`ocr` (Florence2)** for dense, printed, document-style text — receipts, scanned pages, paragraphs. It's built for verbatim character-level transcription over a lot of text.
 - **`query_image` (Moondream2)**, e.g. `question="What does the text/watermark say, exactly?"`, for stylized/logo/cursive/low-contrast text — photo watermarks, signage, logotypes. Florence2's OCR head misreads these; it read a real watermark reading "Ride the Sky / Equine Photography / ridetheskyequine.com" as "SQUINT PHOTOGRAPHY / squentphotography.com" (2026-08-20 test on `testpette.jpg`). Moondream2 read the same image correctly.
@@ -46,4 +53,4 @@ Don't hard-route `ocr` to always call Moondream instead — Moondream is a VQA m
 
 ## A note on where this lives
 
-This checkout used to live under OneDrive. `uv tool install` failed there with a hardlink error, and `uv run`/`uv sync` separately failed removing a `.dist-info/licenses` directory that OneDrive had turned into a cloud placeholder — neither error message mentions OneDrive. Moving the checkout to `C:\AI\MCP\mcp-florence2` (a plain local path) resolved both. Keep it out of any synced folder.
+This checkout used to live under OneDrive. `uv tool install` failed there with a hardlink error, and `uv run`/`uv sync` separately failed removing a `.dist-info/licenses` directory that OneDrive had turned into a cloud placeholder — neither error message mentions OneDrive. Moving the checkout to `C:\AI\MCP\FusionVisionMCP` (a plain local path, renamed from `C:\AI\MCP\mcp-florence2` on 2026-08-20) resolved both. Keep it out of any synced folder.

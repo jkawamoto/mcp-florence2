@@ -24,7 +24,8 @@ SAMPLE_IMAGE_FILEPATH = str(TEST_DIR / "sample.jpg")
 SAMPLE_PDF_FILEPATH = str(TEST_DIR / "sample.pdf")
 
 SERVER_PARAMS = StdioServerParameters(
-    command="uv", args=["run", "mcp-florence2", "--cache-model", "--model", "florence-community/Florence-2-base"]
+    command="uv",
+    args=["run", "fusion-vision-mcp", "--cache-model", "--model", "florence-community/Florence-2-base"],
 )
 
 

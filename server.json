@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.jkawamoto/mcp-florence2",
-  "description": "An MCP server for processing images using Florence-2",
+  "name": "io.github.warrens951/fusion-vision-mcp",
+  "description": "An MCP server fusing Florence-2 and Moondream2 for image captioning, OCR, object detection/grounding, and visual question answering",
   "status": "active",
   "repository": {
-    "url": "https://github.com/jkawamoto/mcp-florence2",
+    "url": "https://github.com/warrens951/FusionVisionMCP",
     "source": "github"
   },
   "version": "0.4.0",
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/jkawamoto/mcp-florence2/releases/download/v0.4.0/mcp-florence2.mcpb",
+      "identifier": "https://github.com/warrens951/FusionVisionMCP/releases/download/v0.4.0/fusion-vision-mcp.mcpb",
       "fileSha256": "",
       "version": "0.4.0",
       "transport": {

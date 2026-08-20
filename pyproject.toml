@@ -3,12 +3,13 @@ build-backend = "hatchling.build"
 requires = [ "hatchling" ]
 
 [project]
-name = "mcp-florence2"
+name = "fusion-vision-mcp"
 version = "0.4.0"
-description = "An MCP server for processing images using Florence-2 and Moondream2"
+description = "FusionVisionMCP: an MCP server fusing Florence-2 and Moondream2 for captioning, OCR, object detection/grounding, and visual question answering"
 readme = "README.md"
 authors = [
     { name = "Junpei Kawamoto", email = "kawamoto.junpei.s64@kyoto-u.jp" },
+    { name = "warrens951", email = "warrens951@gmail.com" },
 ]
 requires-python = ">=3.12"
 classifiers = [
@@ -41,7 +42,7 @@ dependencies = [
     # renamed internals (`all_tied_weights_keys`) that moondream2's HfMoondream class relies on.
     "transformers>=4.57.2,<5",
 ]
-scripts.mcp-florence2 = "mcp_florence2.cli:main"
+scripts.fusion-vision-mcp = "fusion_vision_mcp.cli:main"
 
 [dependency-groups]
 dev = [

@@ -32,4 +32,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 RUN huggingface-cli download florence-community/Florence-2-base
 
-CMD ["mcp-florence2", "--cache-model"]
+CMD ["fusion-vision-mcp", "--cache-model"]

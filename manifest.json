@@ -1,27 +1,27 @@
 {
   "$schema": "https://raw.githubusercontent.com/anthropics/mcpb/refs/heads/main/schemas/mcpb-manifest-v0.4.schema.json",
   "manifest_version": "0.4",
-  "name": "mcp-florence2",
-  "display_name": "Florence-2 MCP Server",
+  "name": "fusion-vision-mcp",
+  "display_name": "FusionVisionMCP",
   "version": "0.4.0",
-  "description": "An MCP server for processing images using Florence-2",
+  "description": "An MCP server fusing Florence-2 and Moondream2 for image captioning, OCR, object detection/grounding, and visual question answering",
   "author": {
-    "name": "Junpei Kawamoto",
-    "email": "kawamoto.junpei.s64@kyoto-u.jp",
-    "url": "https://github.com/jkawamoto"
+    "name": "warrens951",
+    "email": "warrens951@gmail.com",
+    "url": "https://github.com/warrens951"
   },
-  "homepage": "https://github.com/jkawamoto/mcp-florence2",
-  "documentation": "https://github.com/jkawamoto/mcp-florence2",
-  "support": "https://github.com/jkawamoto/mcp-florence2/issues",
+  "homepage": "https://github.com/warrens951/FusionVisionMCP",
+  "documentation": "https://github.com/warrens951/FusionVisionMCP",
+  "support": "https://github.com/warrens951/FusionVisionMCP/issues",
   "server": {
     "type": "python",
-    "entry_point": "src/mcp_florence2/__main__.py",
+    "entry_point": "src/fusion_vision_mcp/__main__.py",
     "mcp_config": {
       "command": "uvx",
       "args": [
         "--from",
         "${__dirname}",
-        "mcp-florence2"
+        "fusion-vision-mcp"
       ]
     }
   },
@@ -33,15 +33,46 @@
     {
       "name": "caption",
       "description": "Processes an image file and generates captions for the image."
+    },
+    {
+      "name": "detect_objects",
+      "description": "Detect instances of a named object in an image, returning bounding boxes."
+    },
+    {
+      "name": "point_objects",
+      "description": "Locate instances of a named object in an image, returning center coordinates."
+    },
+    {
+      "name": "dense_region_caption",
+      "description": "Generate a caption for every salient region of an image, with bounding boxes."
+    },
+    {
+      "name": "query_image",
+      "description": "Ask a free-form question about an image (visual question answering), backed by Moondream2."
+    },
+    {
+      "name": "analyze_image",
+      "description": "Multi-purpose image analysis tool dispatching to caption/ocr/detect/point/dense_caption/query."
+    },
+    {
+      "name": "batch_analyze_images",
+      "description": "Runs analyze_image's operation over several images, reporting per-image success or failure."
+    },
+    {
+      "name": "process",
+      "description": "Processes an image file with a custom prompt using the Florence-2 model."
     }
   ],
   "keywords": [
     "florence-2",
+    "moondream2",
+    "ocr",
+    "vqa",
     "vision"
   ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jkawamoto/mcp-florence2"
+    "url": "https://github.com/warrens951/FusionVisionMCP"
   }
 }

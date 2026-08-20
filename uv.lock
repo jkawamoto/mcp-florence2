@@ -422,6 +422,61 @@ wheels = [
 ]
 
 [[package]]
+name = "fusion-vision-mcp"
+version = "0.4.0"
+source = { editable = "." }
+dependencies = [
+    { name = "dill" },
+    { name = "einops" },
+    { name = "mcp" },
+    { name = "pillow" },
+    { name = "pydantic" },
+    { name = "pypdfium2" },
+    { name = "pyvips", extra = ["binary"] },
+    { name = "requests" },
+    { name = "rich-click" },
+    { name = "timm" },
+    { name = "torch" },
+    { name = "torchvision" },
+    { name = "transformers" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "bump-my-version" },
+    { name = "pre-commit" },
+    { name = "pre-commit-uv" },
+    { name = "pytest" },
+    { name = "types-requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "dill", specifier = ">=0.3.9" },
+    { name = "einops", specifier = ">=0.8.1" },
+    { name = "mcp", specifier = ">=2" },
+    { name = "pillow", specifier = ">=11.3" },
+    { name = "pydantic", specifier = ">=2.11.9" },
+    { name = "pypdfium2", specifier = ">=4.30" },
+    { name = "pyvips", extras = ["binary"], specifier = ">=2.2" },
+    { name = "requests", specifier = ">=2.32.3" },
+    { name = "rich-click", specifier = ">=1.8.8" },
+    { name = "timm", specifier = ">=1.0.15" },
+    { name = "torch", specifier = ">=2.13" },
+    { name = "torchvision", specifier = ">=0.18" },
+    { name = "transformers", specifier = ">=4.57.2,<5" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "bump-my-version", specifier = ">=1.1.1" },
+    { name = "pre-commit", specifier = ">=4.2" },
+    { name = "pre-commit-uv", specifier = ">=4.1.4" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "types-requests", specifier = ">=2.32.0.20250328" },
+]
+
+[[package]]
 name = "h11"
 version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -666,61 +721,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/74/33/32d4dff2c95bb5d897c3ef4c83649a08996b17b58f0a326d2495d4c81179/mcp-2.0.0.tar.gz", hash = "sha256:0f440e735c13ece8bb19bc62cf0b86f4313448432fbb77d35e14034f4e050728", size = 1662284, upload-time = "2026-07-28T13:45:32.346Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/67/72/7d7897418912c1d12e87556630dfb7bf0eac71160e9bef8b447960804ee3/mcp-2.0.0-py3-none-any.whl", hash = "sha256:1cb4c75d2d2c7b8c1d756355e5d82a39f2822cc7f13e22a2051d7ca3592349d6", size = 349980, upload-time = "2026-07-28T13:45:28.853Z" },
-]
-
-[[package]]
-name = "mcp-florence2"
-version = "0.4.0"
-source = { editable = "." }
-dependencies = [
-    { name = "dill" },
-    { name = "einops" },
-    { name = "mcp" },
-    { name = "pillow" },
-    { name = "pydantic" },
-    { name = "pypdfium2" },
-    { name = "pyvips", extra = ["binary"] },
-    { name = "requests" },
-    { name = "rich-click" },
-    { name = "timm" },
-    { name = "torch" },
-    { name = "torchvision" },
-    { name = "transformers" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "bump-my-version" },
-    { name = "pre-commit" },
-    { name = "pre-commit-uv" },
-    { name = "pytest" },
-    { name = "types-requests" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "dill", specifier = ">=0.3.9" },
-    { name = "einops", specifier = ">=0.8.1" },
-    { name = "mcp", specifier = ">=2" },
-    { name = "pillow", specifier = ">=11.3" },
-    { name = "pydantic", specifier = ">=2.11.9" },
-    { name = "pypdfium2", specifier = ">=4.30" },
-    { name = "pyvips", extras = ["binary"], specifier = ">=2.2.0" },
-    { name = "requests", specifier = ">=2.32.3" },
-    { name = "rich-click", specifier = ">=1.8.8" },
-    { name = "timm", specifier = ">=1.0.15" },
-    { name = "torch", specifier = ">=2.13" },
-    { name = "torchvision", specifier = ">=0.18" },
-    { name = "transformers", specifier = ">=4.57.2,<5" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "bump-my-version", specifier = ">=1.1.1" },
-    { name = "pre-commit", specifier = ">=4.2" },
-    { name = "pre-commit-uv", specifier = ">=4.1.4" },
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "types-requests", specifier = ">=2.32.0.20250328" },
 ]
 
 [[package]]

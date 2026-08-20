@@ -21,11 +21,11 @@ from PIL.Image import open as open_image
 from pydantic import Field
 from pypdfium2 import PdfDocument
 
-from mcp_florence2.florence2 import CaptionLevel, Florence2, Florence2SP
-from mcp_florence2.idle import IdleProxy, IdleReleased
-from mcp_florence2.moondream import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, Moondream
+from fusion_vision_mcp.florence2 import CaptionLevel, Florence2, Florence2SP
+from fusion_vision_mcp.idle import IdleProxy, IdleReleased
+from fusion_vision_mcp.moondream import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, Moondream
 
-SERVER_NAME: Final[str] = "Florence2"
+SERVER_NAME: Final[str] = "FusionVisionMCP"
 
 
 @contextmanager

@@ -8,7 +8,7 @@
 import threading
 import time
 
-from mcp_florence2.idle import IdleProxy, IdleReleased
+from fusion_vision_mcp.idle import IdleProxy, IdleReleased
 
 
 class Counter:

@@ -207,7 +207,15 @@ def server(
 
     @mcp.tool()
     def ocr(ctx: Context[AppContext], src: ImagePath) -> list[str]:
-        """Process an image file or URL using OCR to extract text."""
+        """Process an image file or URL using OCR to extract text.
+
+        Best for dense, printed, document-style text (receipts, scanned pages,
+        paragraphs). Do NOT use this for photo watermarks, logos, signage, or
+        any cursive/stylized/low-contrast text — it confidently misreads that
+        kind of text (fabricates plausible-looking wrong words) rather than
+        failing visibly. Use `query_image` instead for that case, e.g. with
+        the question "What does the text/watermark say, exactly?".
+        """
         with get_images(src) as images:
             return ctx.request_context.lifespan_context.processor.ocr(images)
 
@@ -241,7 +249,13 @@ def server(
         src: ImagePath,
         question: Annotated[str, Field(description="A free-form question to ask about the image.")],
     ) -> list[str]:
-        """Ask a free-form question about an image (visual question answering)."""
+        """Ask a free-form question about an image (visual question answering).
+
+        This is the right tool for reading photo watermarks, logos, signage,
+        or any cursive/stylized/low-contrast text — ask e.g. "What does the
+        text/watermark say, exactly?". The `ocr` tool misreads that kind of
+        text confidently; prefer this one for it instead.
+        """
         with get_images(src) as images:
             return ctx.request_context.lifespan_context.vqa.query(images, question)
 
@@ -250,7 +264,15 @@ def server(
         ctx: Context[AppContext],
         src: ImagePath,
         operation: Annotated[
-            str, Field(description="One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'.")
+            str,
+            Field(
+                description=(
+                    "One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'. "
+                    "For watermarks, logos, signage, or stylized/cursive text, use 'query' "
+                    "(e.g. question=\"What does the text/watermark say, exactly?\") instead of "
+                    "'ocr' — 'ocr' misreads that kind of text confidently."
+                )
+            ),
         ],
         question: Annotated[str, Field(description="Required when operation is 'query'.")] = "",
         object_name: Annotated[str, Field(description="Required when operation is 'detect' or 'point'.")] = "",
@@ -268,7 +290,15 @@ def server(
             list[os.PathLike[str] | str], Field(description="File paths or URLs of the images to process.")
         ],
         operation: Annotated[
-            str, Field(description="One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'.")
+            str,
+            Field(
+                description=(
+                    "One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'. "
+                    "For watermarks, logos, signage, or stylized/cursive text, use 'query' "
+                    "(e.g. question=\"What does the text/watermark say, exactly?\") instead of "
+                    "'ocr' — 'ocr' misreads that kind of text confidently."
+                )
+            ),
         ],
         question: Annotated[str, Field(description="Required when operation is 'query'.")] = "",
         object_name: Annotated[str, Field(description="Required when operation is 'detect' or 'point'.")] = "",

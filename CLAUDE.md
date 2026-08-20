@@ -35,6 +35,15 @@ uv run --with pytest --with anyio pytest tests -q
 
 `origin` is this fork (`warrens951/mcp-florence2`, public); `upstream` is `jkawamoto/mcp-florence2`. Feature work happens on branches off `main`, which tracks `upstream/main` — keep `main` itself a clean mirror of upstream so a PR can be opened from a branch without carrying unrelated history.
 
+## Two OCR paths — pick by text type, don't default to `ocr`
+
+`ocr` (Florence2's `<OCR>` head) and `query_image` (Moondream2 VQA, asked to transcribe) both read text, but they fail differently, so route by what the text looks like rather than always reaching for `ocr`:
+
+- **`ocr` (Florence2)** for dense, printed, document-style text — receipts, scanned pages, paragraphs. It's built for verbatim character-level transcription over a lot of text.
+- **`query_image` (Moondream2)**, e.g. `question="What does the text/watermark say, exactly?"`, for stylized/logo/cursive/low-contrast text — photo watermarks, signage, logotypes. Florence2's OCR head misreads these; it read a real watermark reading "Ride the Sky / Equine Photography / ridetheskyequine.com" as "SQUINT PHOTOGRAPHY / squentphotography.com" (2026-08-20 test on `testpette.jpg`). Moondream2 read the same image correctly.
+
+Don't hard-route `ocr` to always call Moondream instead — Moondream is a VQA model, not a transcription specialist, and is more prone to paraphrasing rather than verbatim-transcribing long or dense text blocks. Keep both tools and choose per call.
+
 ## A note on where this lives
 
 This checkout used to live under OneDrive. `uv tool install` failed there with a hardlink error, and `uv run`/`uv sync` separately failed removing a `.dist-info/licenses` directory that OneDrive had turned into a cloud placeholder — neither error message mentions OneDrive. Moving the checkout to `C:\AI\MCP\mcp-florence2` (a plain local path) resolved both. Keep it out of any synced folder.

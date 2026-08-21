@@ -59,6 +59,10 @@
       "description": "Runs analyze_image's operation over several images, reporting per-image success or failure."
     },
     {
+      "name": "spatial_relations",
+      "description": "Measure contact, gaps, containment depth and shape between named objects using SAM2 masks."
+    },
+    {
       "name": "process",
       "description": "Processes an image file with a custom prompt using the Florence-2 model."
     }
@@ -66,6 +70,8 @@
   "keywords": [
     "florence-2",
     "moondream2",
+    "sam2",
+    "segmentation",
     "ocr",
     "vqa",
     "vision"

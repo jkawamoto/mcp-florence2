@@ -9,7 +9,7 @@ import logging
 
 import rich_click as click
 
-from . import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, SERVER_NAME, server
+from . import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, DEFAULT_SAM2_MODEL, SERVER_NAME, server
 
 
 @click.command()
@@ -33,6 +33,12 @@ from . import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, SERVER_NAME, 
     help="Specifies the Moondream2 model revision used for the query_image (VQA) tool.",
 )
 @click.option(
+    "--sam2-model",
+    default=DEFAULT_SAM2_MODEL,
+    show_default=True,
+    help="Specifies the SAM2 model used for the spatial_relations tool.",
+)
+@click.option(
     "--idle-timeout",
     type=float,
     default=0,
@@ -44,14 +50,29 @@ from . import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, SERVER_NAME, 
     ),
 )
 @click.version_option()
-def main(model: str, cache_model: bool, moondream_model: str, moondream_revision: str, idle_timeout: float) -> None:
+def main(
+    model: str,
+    cache_model: bool,
+    moondream_model: str,
+    moondream_revision: str,
+    sam2_model: str,
+    idle_timeout: float,
+) -> None:
     """
-    An MCP server for processing images using Florence-2 and Moondream2.
+    An MCP server for processing images using Florence-2, Moondream2 and SAM2.
     """
     logger = logging.getLogger(__name__)
 
     idle_seconds = idle_timeout * 60
-    s = server(SERVER_NAME, model, not cache_model, moondream_model, moondream_revision, idle_seconds)
+    s = server(
+        SERVER_NAME,
+        model,
+        subprocess=not cache_model,
+        moondream_model_id=moondream_model,
+        moondream_revision=moondream_revision,
+        sam2_model_id=sam2_model,
+        idle_timeout=idle_seconds,
+    )
 
     logger.info(f"Starting server with {model} + {moondream_model}@{moondream_revision} (Press CTRL+D to quit)")
     if idle_seconds > 0:

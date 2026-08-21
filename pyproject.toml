@@ -25,6 +25,7 @@ dependencies = [
     "dill>=0.3.9",
     "einops>=0.8.1",
     "mcp>=2",
+    "numpy>=2.1",
     "pillow>=11.3",
     "pydantic>=2.11.9",
     "pypdfium2>=4.30",
@@ -34,6 +35,8 @@ dependencies = [
     "pyvips[binary]>=2.2",
     "requests>=2.32.3",
     "rich-click>=1.8.8",
+    # Distance transforms behind the contact/containment measurements in geometry.py.
+    "scipy>=1.14",
     "timm>=1.0.15",
     "torch>=2.13",
     "torchvision>=0.18",

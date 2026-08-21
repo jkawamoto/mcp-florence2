@@ -8,11 +8,12 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![GitHub License](https://img.shields.io/github/license/Whoawhen/FusionVisionMCP)](https://github.com/Whoawhen/FusionVisionMCP/blob/main/LICENSE)
 
-An MCP server fusing [Florence-2](https://huggingface.co/microsoft/Florence-2-large)
-and [Moondream2](https://huggingface.co/vikhyatk/moondream2) into one computer-vision toolset. Fork of
+An MCP server fusing [Florence-2](https://huggingface.co/microsoft/Florence-2-large),
+[Moondream2](https://huggingface.co/vikhyatk/moondream2) and [SAM2](https://huggingface.co/facebook/sam2.1-hiera-small)
+into one computer-vision toolset. Fork of
 [jkawamoto/mcp-florence2](https://github.com/jkawamoto/mcp-florence2), adding Moondream2 visual question
-answering, object grounding, batch analysis, and idle-timeout memory release on top of the original
-Florence-2-only server.
+answering, object grounding, batch analysis, SAM2-backed spatial measurement, and idle-timeout memory release on
+top of the original Florence-2-only server.
 
 You can process images or PDF files stored on a local or web server to extract text using OCR (Optical Character
 Recognition), generate descriptive captions summarizing the content of the images, locate named objects and
@@ -20,7 +21,11 @@ return their bounding boxes or centre points, caption every salient region, and 
 image.
 
 Florence-2 handles captioning, OCR, detection and grounding. Moondream2 backs the `query_image` tool, because
-Florence-2 has no open-ended visual question answering task.
+Florence-2 has no open-ended visual question answering task. SAM2 backs `spatial_relations`, because bounding
+boxes cannot answer questions about contact or containment.
+
+Each model loads on first use and is released independently, so a request only pays for what it needs: OCR never
+loads Moondream2 or SAM2.
 
 > **OCR vs. query_image**: Florence-2's OCR head is built for dense, printed, document-style text and can
 > confidently misread stylized, cursive, or low-contrast text (watermarks, logos, signage) rather than failing
@@ -161,6 +166,57 @@ file does not abort the batch.
 - **question**: Required when the operation is `query`.
 - **object_name**: Required when the operation is `detect` or `point`.
 
+### spatial_relations
+
+Measures how named objects sit relative to one another: whether they touch, how far apart they are, how much of
+one lies inside the other and how deeply, plus each object's elongation, straightness and end-to-end width
+profile. Florence-2 locates the objects, SAM2 segments them, and the geometry is computed from the masks.
+
+This answers questions a bounding box cannot. Two boxes overlap as soon as one object is merely *in front of*
+another, so boxes cannot tell contact from occlusion; silhouettes can. It reports measurements rather than
+verdicts — the caller decides what the numbers mean for the scene at hand.
+
+#### Arguments:
+
+- **src**: A file path or URL to the image file that needs to be processed.
+- **objects**: Names of the objects to locate and compare, e.g. `["hand", "sword", "shield"]`.
+
+#### Returns:
+
+Per object — `area`, `elongation`, `straightness` (`max_deviation` from a straight line, `kink` from a smooth
+curve) and `width_profile` (`end_a_width`, `mid_width`, `end_b_width`, `end_symmetry`).
+
+Per pair — `state` (`separate` / `touching` / `overlapping`), `gap` in pixels, `a_inside_b` and `b_inside_a`
+area fractions, and `embed_depth`, how far the overlap reaches from the other object's boundary.
+
+Worked examples, measured on real images:
+
+| Situation | Signal |
+| --- | --- |
+| A sword that should be held, but floats free of the hand | `state: separate`, `gap: 54px` |
+| A hand gripping a shield's rim | `a_inside_b: 15%`, `embed_depth: 3.3px` |
+| A hand pushed through a shield | `a_inside_b: 52%`, `embed_depth: 4.2px` |
+| A hand fused into the middle of a shield face | `a_inside_b: 97%`, `embed_depth: 12.6px` |
+| A blade with a point at *both* ends | `end_symmetry: 0.94`, versus 0.75–0.83 for blades with one tip and a hilt |
+
+The containment figures separate cleanly and in order. `end_symmetry` separates too, but by a narrower margin —
+0.94 against 0.83 — so it is better read as evidence alongside the width numbers themselves than as a threshold
+to trust on its own.
+
+Note that `spatial_relations` is the only tool that loads SAM2, and it loads it on first use — a server that is
+only ever asked for captions or OCR never pays for it.
+
+#### Limits
+
+Masks are decoded on a fixed 256×256 grid before being upscaled to the image, so detail finer than roughly
+`max(image side) / 256` pixels is not resolved. The measurements are also only as good as the detection they
+start from: `detect_objects` returns nothing useful for vague classes, and can label the same region two
+different ways in an ambiguous pose, which the geometry then faithfully measures.
+
+`straightness` reliably separates a straight rod from a curved one, but it does not distinguish a naturally
+curved object from an unnaturally bent one — on two branch-like staffs it scored 0.057 and 0.065, too close to
+threshold on. Treat it as a shape description, not a defect detector.
+
 ### process
 
 Processes an image file with a custom prompt using the Florence-2 model. Useful for Florence-2
@@ -177,6 +233,9 @@ task tokens this server does not expose as their own tool.
 - **--cache-model**: Keep the Florence-2 model loaded between requests instead of running each one in a fresh
   subprocess.
 - **--moondream-model** / **--moondream-revision**: The Moondream2 model and revision backing `query_image`.
+- **--sam2-model**: The SAM2 model backing `spatial_relations`. Defaults to `sam2.1-hiera-small`; measured on
+  CPU, `tiny` is ~0.06s faster per call for a slightly worse mask, and `base-plus` roughly doubles inference
+  time for a marginal gain.
 - **--idle-timeout**: Minutes of inactivity after which both models are unloaded and their memory released; they
   reload automatically on the next request. `0`, the default, keeps them loaded for the lifetime of the server.
 

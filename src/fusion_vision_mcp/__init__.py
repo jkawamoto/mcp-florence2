@@ -14,18 +14,26 @@ from io import BytesIO
 from pathlib import Path
 from typing import Annotated, Any, Final, Protocol, cast
 
+import numpy as np
 import requests
 from mcp.server.mcpserver import Context, MCPServer
+from numpy.typing import NDArray
 from PIL.Image import Image
 from PIL.Image import open as open_image
 from pydantic import Field
 from pypdfium2 import PdfDocument
 
+from fusion_vision_mcp import geometry
 from fusion_vision_mcp.florence2 import CaptionLevel, Florence2, Florence2SP
 from fusion_vision_mcp.idle import IdleProxy, IdleReleased
 from fusion_vision_mcp.moondream import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, Moondream
+from fusion_vision_mcp.sam2 import DEFAULT_SAM2_MODEL, MASK_DECODE_RESOLUTION, Sam2
 
 SERVER_NAME: Final[str] = "FusionVisionMCP"
+
+#: Ceiling on objects compared in one `spatial_relations` call. Relations grow as
+#: n(n-1)/2, so an over-broad detection could otherwise return a huge payload.
+_MAX_RELATED_OBJECTS: Final[int] = 12
 
 
 @contextmanager
@@ -132,12 +140,21 @@ class VqaProcessor(Protocol):
         ...
 
 
+class Segmenter(Protocol):
+    """Represents a protocol for turning bounding boxes into segmentation masks."""
+
+    def segment(self, image: Image, boxes: list[list[int]]) -> list[NDArray[np.bool_]]:
+        """Returns one boolean mask per box, on the image's own pixel grid."""
+        ...
+
+
 @dataclass
 class AppContext:
     """Context for the FastMCP app."""
 
     processor: Processor
     vqa: VqaProcessor
+    segmenter: Segmenter
 
 
 @asynccontextmanager
@@ -147,14 +164,21 @@ async def app_lifespan(
     subprocess: bool,
     moondream_model_id: str,
     moondream_revision: str,
+    sam2_model_id: str = DEFAULT_SAM2_MODEL,
     idle_timeout: float = 0,
 ) -> AsyncIterator[AppContext]:
-    """Context manager for the FastMCP app lifespan."""
+    """Context manager for the FastMCP app lifespan.
+
+    Each model is wrapped separately, so a request only ever loads the model it
+    actually needs: captioning never pulls in Moondream, and nothing but
+    `spatial_relations` pulls in SAM2. Each is released on its own idle timer.
+    """
     processor: Processor
     vqa: VqaProcessor
+    segmenter: Segmenter
     if idle_timeout > 0:
-        # Keep both models in this process so repeat calls stay fast, and let the
-        # idle timer hand their memory back once the work stops.
+        # Keep each model in this process so repeat calls stay fast, and let the
+        # idle timer hand its memory back once the work stops.
         processor = cast(
             Processor,
             IdleProxy(IdleReleased(lambda: Florence2(model_id), idle_timeout, "Florence-2")),
@@ -175,7 +199,15 @@ async def app_lifespan(
         else:
             processor = Florence2(model_id)
         vqa = Moondream(moondream_model_id, moondream_revision)
-    yield AppContext(processor, vqa)
+
+    # Always lazy, on both paths. `IdleReleased` builds on first use and, with a
+    # timeout of 0, simply never schedules a release — so a session that never
+    # calls `spatial_relations` never pays for SAM2 at all.
+    segmenter = cast(
+        Segmenter,
+        IdleProxy(IdleReleased(lambda: Sam2(sam2_model_id), idle_timeout, "SAM2")),
+    )
+    yield AppContext(processor, vqa, segmenter)
 
 
 def server(
@@ -184,6 +216,7 @@ def server(
     subprocess: bool = True,
     moondream_model_id: str = DEFAULT_MOONDREAM_MODEL,
     moondream_revision: str = DEFAULT_MOONDREAM_REVISION,
+    sam2_model_id: str = DEFAULT_SAM2_MODEL,
     idle_timeout: float = 0,
 ) -> MCPServer:
     """Creates a new FastMCP server instance with the specified name and model ID."""
@@ -195,6 +228,7 @@ def server(
             subprocess=subprocess,
             moondream_model_id=moondream_model_id,
             moondream_revision=moondream_revision,
+            sam2_model_id=sam2_model_id,
             idle_timeout=idle_timeout,
         ),
     )
@@ -269,7 +303,7 @@ def server(
                 description=(
                     "One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'. "
                     "For watermarks, logos, signage, or stylized/cursive text, use 'query' "
-                    "(e.g. question=\"What does the text/watermark say, exactly?\") instead of "
+                    '(e.g. question="What does the text/watermark say, exactly?") instead of '
                     "'ocr' — 'ocr' misreads that kind of text confidently."
                 )
             ),
@@ -295,7 +329,7 @@ def server(
                 description=(
                     "One of: 'caption', 'ocr', 'detect', 'point', 'dense_caption', 'query'. "
                     "For watermarks, logos, signage, or stylized/cursive text, use 'query' "
-                    "(e.g. question=\"What does the text/watermark say, exactly?\") instead of "
+                    '(e.g. question="What does the text/watermark say, exactly?") instead of '
                     "'ocr' — 'ocr' misreads that kind of text confidently."
                 )
             ),
@@ -319,6 +353,73 @@ def server(
             except Exception as e:  # noqa: BLE001 - reported per-image, batch must continue
                 results.append({"src": str(src), "success": False, "error": str(e)})
         return results
+
+    @mcp.tool()
+    def spatial_relations(
+        ctx: Context[AppContext],
+        src: ImagePath,
+        objects: Annotated[
+            list[str],
+            Field(description="Names of the objects to locate and compare, e.g. ['hand', 'sword', 'shield']."),
+        ],
+    ) -> dict[str, Any]:
+        """Measure how named objects in an image sit relative to one another.
+
+        Locates each object, segments it, and reports measurements that are hard
+        to judge by eye: whether two things actually touch, how many pixels apart
+        they are, how much of one lies inside the other and how deeply, plus each
+        object's own elongation, straightness and end-to-end width profile.
+
+        This reports geometry, not verdicts — it does not decide what is wrong.
+        Interpret the numbers against what the scene ought to look like: a hand
+        and the grip it holds that come back `separate` with a large `gap` are not
+        in contact; a hand `overlapping` a shield with `a_inside_b` near 1.0 and a
+        large `embed_depth` is buried in the shield face rather than gripping its
+        rim; an elongated object whose `end_symmetry` is near 1.0 is equally wide
+        at both ends, unlike a blade that tapers to a point at one end only.
+
+        Useful for checking whether a generated or edited image holds together
+        physically, for verifying that an object is where it should be relative to
+        another, and for any question of contact, containment or clearance that a
+        bounding box cannot answer — boxes overlap whenever one object is simply
+        in front of another.
+        """
+        app = ctx.request_context.lifespan_context
+        with get_images(src) as images:
+            image = images[0]
+
+            located: list[dict[str, Any]] = []
+            for object_name in objects:
+                detected = app.processor.detect_objects([image], object_name)[0]
+                for index, box in enumerate(detected["bboxes"]):
+                    if len(located) >= _MAX_RELATED_OBJECTS:
+                        break
+                    located.append({"id": f"{object_name}#{index}", "label": object_name, "box": [int(v) for v in box]})
+
+            if not located:
+                return {
+                    "image_size": [image.width, image.height],
+                    "objects": [],
+                    "relations": [],
+                    "note": "None of the requested objects were found.",
+                }
+
+            masks = app.segmenter.segment(image, [cast(list[int], obj["box"]) for obj in located])
+            for obj, mask in zip(located, masks, strict=True):
+                obj.update(geometry.describe(mask))
+
+            relations = [
+                {"a": located[i]["id"], "b": located[j]["id"], **geometry.relation(masks[i], masks[j])}
+                for i in range(len(masks))
+                for j in range(i + 1, len(masks))
+            ]
+
+            return {
+                "image_size": [image.width, image.height],
+                "mask_resolution": MASK_DECODE_RESOLUTION,
+                "objects": located,
+                "relations": relations,
+            }
 
     @mcp.tool()
     def process(ctx: Context[AppContext], src: ImagePath, prompt: CustomPrompt) -> list[str]:
@@ -352,4 +453,10 @@ def _dispatch(app: AppContext, operation: str, images: list[Image], *, question:
     raise ValueError(f"Unknown operation: {operation!r}")
 
 
-__all__: Final = ["SERVER_NAME", "server"]
+__all__: Final = [
+    "DEFAULT_MOONDREAM_MODEL",
+    "DEFAULT_MOONDREAM_REVISION",
+    "DEFAULT_SAM2_MODEL",
+    "SERVER_NAME",
+    "server",
+]

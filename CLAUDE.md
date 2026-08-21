@@ -51,6 +51,30 @@ upstream so a PR can be opened from a branch without carrying unrelated history.
 
 Don't hard-route `ocr` to always call Moondream instead — Moondream is a VQA model, not a transcription specialist, and is more prone to paraphrasing rather than verbatim-transcribing long or dense text blocks. Keep both tools and choose per call.
 
+## `spatial_relations` measures; it does not judge
+
+`spatial_relations` (Florence-2 boxes → SAM2 masks → `geometry.py`) reports numbers and deliberately stops
+there. That split came out of testing, not taste: Moondream answered a plain "describe anything wrong in this
+image" with a flat `"None"` on six different images that all contained a real, human-visible defect, and closed
+yes/no questions gave the *same* answer across genuinely different images often enough that the answer was
+clearly a default rather than an observation. A small VLM does not reliably supply that judgement. The calling
+model does — and what it cannot do is measure, so that is what the tool provides.
+
+Two things follow for anyone extending this:
+
+- **Prefer aggregate statistics over a mask to fine topological derivatives of one.** Overlap fractions,
+  distance transforms, principal axes and per-band centroids all average over many pixels and were stable on
+  real photographs. Skeleton-based measures were tried first for curvature and for counting branch tips: both
+  produced *inverted* results on real images, because `skeletonize` on a rough silhouette turns bark-level
+  texture into spurious branches. `geometry.straightness` gets its centreline from band centroids for exactly
+  this reason.
+- **Validate any new metric against a negative control, not just a positive one.** Every check in `geometry.py`
+  was measured on a known-good image as well as a known-bad one; two candidate checks were dropped precisely
+  because the "good" case scored worse than the "bad" one, which a positive-only test would have hidden.
+
+`geometry.py` is pure numpy/scipy and is unit-tested against synthetic masks in `tests/test_geometry.py`, so
+its behaviour can be checked without downloading a model.
+
 ## A note on where this lives
 
 This checkout used to live under OneDrive. `uv tool install` failed there with a hardlink error, and `uv run`/`uv sync` separately failed removing a `.dist-info/licenses` directory that OneDrive had turned into a cloud placeholder — neither error message mentions OneDrive. Moving the checkout to `C:\AI\MCP\FusionVisionMCP` (a plain local path, renamed from `C:\AI\MCP\mcp-florence2` on 2026-08-20) resolved both. Keep it out of any synced folder.

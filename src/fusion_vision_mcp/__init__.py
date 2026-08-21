@@ -166,6 +166,7 @@ async def app_lifespan(
     moondream_revision: str,
     sam2_model_id: str = DEFAULT_SAM2_MODEL,
     idle_timeout: float = 0,
+    device: str | None = None,
 ) -> AsyncIterator[AppContext]:
     """Context manager for the FastMCP app lifespan.
 
@@ -181,13 +182,13 @@ async def app_lifespan(
         # idle timer hand its memory back once the work stops.
         processor = cast(
             Processor,
-            IdleProxy(IdleReleased(lambda: Florence2(model_id), idle_timeout, "Florence-2")),
+            IdleProxy(IdleReleased(lambda: Florence2(model_id, device), idle_timeout, "Florence-2")),
         )
         vqa = cast(
             VqaProcessor,
             IdleProxy(
                 IdleReleased(
-                    lambda: Moondream(moondream_model_id, moondream_revision),
+                    lambda: Moondream(moondream_model_id, moondream_revision, device),
                     idle_timeout,
                     "Moondream",
                 )
@@ -195,17 +196,17 @@ async def app_lifespan(
         )
     else:
         if subprocess:
-            processor = Florence2SP(model_id)
+            processor = Florence2SP(model_id, device)
         else:
-            processor = Florence2(model_id)
-        vqa = Moondream(moondream_model_id, moondream_revision)
+            processor = Florence2(model_id, device)
+        vqa = Moondream(moondream_model_id, moondream_revision, device)
 
     # Always lazy, on both paths. `IdleReleased` builds on first use and, with a
     # timeout of 0, simply never schedules a release — so a session that never
     # calls `spatial_relations` never pays for SAM2 at all.
     segmenter = cast(
         Segmenter,
-        IdleProxy(IdleReleased(lambda: Sam2(sam2_model_id), idle_timeout, "SAM2")),
+        IdleProxy(IdleReleased(lambda: Sam2(sam2_model_id, device), idle_timeout, "SAM2")),
     )
     yield AppContext(processor, vqa, segmenter)
 
@@ -218,6 +219,7 @@ def server(
     moondream_revision: str = DEFAULT_MOONDREAM_REVISION,
     sam2_model_id: str = DEFAULT_SAM2_MODEL,
     idle_timeout: float = 0,
+    device: str | None = None,
 ) -> MCPServer:
     """Creates a new FastMCP server instance with the specified name and model ID."""
     mcp = MCPServer(
@@ -230,6 +232,7 @@ def server(
             moondream_revision=moondream_revision,
             sam2_model_id=sam2_model_id,
             idle_timeout=idle_timeout,
+            device=device,
         ),
     )
 

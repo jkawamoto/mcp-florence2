@@ -15,6 +15,8 @@ from numpy.typing import NDArray
 from PIL.Image import Image
 from transformers import Sam2Model, Sam2Processor
 
+from .device import resolve_device
+
 #: Measured on CPU over tiny/small/base-plus: `small` costs ~0.06s more per call
 #: and ~34MB more than `tiny` for a better mask, while `base-plus` roughly doubles
 #: inference time for a marginal gain. `small` is the middle that earns its keep.
@@ -35,12 +37,17 @@ class Sam2:
     measurements in `geometry` need.
     """
 
+    device: str
+    torch_dtype: torch.dtype
     model: Any
     processor: Any
 
-    def __init__(self, model_id: str = DEFAULT_SAM2_MODEL) -> None:
+    def __init__(self, model_id: str = DEFAULT_SAM2_MODEL, device: str | None = None) -> None:
+        self.device = resolve_device(device)
+        self.torch_dtype = torch.float32 if self.device == "cpu" else torch.float16
+
         self.processor = Sam2Processor.from_pretrained(model_id)
-        self.model = Sam2Model.from_pretrained(model_id)
+        self.model = Sam2Model.from_pretrained(model_id, dtype=self.torch_dtype).to(self.device)
         self.model.eval()
 
     def segment(self, image: Image, boxes: list[list[int]]) -> list[NDArray[np.bool_]]:
@@ -54,7 +61,9 @@ class Sam2:
             return []
 
         with image.convert("RGB") as rgb:
-            inputs = self.processor(images=rgb, input_boxes=[boxes], return_tensors="pt")
+            inputs = self.processor(images=rgb, input_boxes=[boxes], return_tensors="pt").to(
+                self.device, self.torch_dtype
+            )
             with torch.no_grad():
                 outputs = self.model(**inputs)
 
@@ -63,7 +72,7 @@ class Sam2:
                 best = int(outputs.iou_scores[0, index].argmax())
                 logits = outputs.pred_masks[0, index, best][None, None]
                 upscaled = torch.nn.functional.interpolate(
-                    logits, size=(rgb.height, rgb.width), mode="bilinear", align_corners=False
+                    logits.float(), size=(rgb.height, rgb.width), mode="bilinear", align_corners=False
                 )
-                masks.append((upscaled[0, 0] > 0).numpy())
+                masks.append((upscaled[0, 0] > 0).cpu().numpy())
             return masks

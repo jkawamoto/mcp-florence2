@@ -49,6 +49,15 @@ from . import DEFAULT_MOONDREAM_MODEL, DEFAULT_MOONDREAM_REVISION, DEFAULT_SAM2_
         "lifetime of the server. Implies --cache-model, since repeat calls reuse the loaded model."
     ),
 )
+@click.option(
+    "--device",
+    default=None,
+    help=(
+        "Torch device all three models load onto, e.g. 'cpu', 'cuda', 'cuda:1', 'mps'. "
+        "Auto-detected (MPS, then CUDA, then CPU) when unset -- set this to pin the server to a "
+        "specific accelerator, force CPU on a shared GPU box, or target a non-default GPU index."
+    ),
+)
 @click.version_option()
 def main(
     model: str,
@@ -57,6 +66,7 @@ def main(
     moondream_revision: str,
     sam2_model: str,
     idle_timeout: float,
+    device: str | None,
 ) -> None:
     """
     An MCP server for processing images using Florence-2, Moondream2 and SAM2.
@@ -72,6 +82,7 @@ def main(
         moondream_revision=moondream_revision,
         sam2_model_id=sam2_model,
         idle_timeout=idle_seconds,
+        device=device,
     )
 
     logger.info(f"Starting server with {model} + {moondream_model}@{moondream_revision} (Press CTRL+D to quit)")

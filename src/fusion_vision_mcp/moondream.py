@@ -11,6 +11,8 @@ import torch
 from PIL.Image import Image
 from transformers import AutoModelForCausalLM
 
+from .device import resolve_device
+
 DEFAULT_MOONDREAM_MODEL: str = "vikhyatk/moondream2"
 DEFAULT_MOONDREAM_REVISION: str = "2025-01-09"
 
@@ -25,16 +27,14 @@ class Moondream:
     device: str
     model: Any
 
-    def __init__(self, model_id: str = DEFAULT_MOONDREAM_MODEL, revision: str = DEFAULT_MOONDREAM_REVISION) -> None:
-        if torch.backends.mps.is_available():
-            self.device = "mps:0"
-            torch_dtype = torch.float16
-        elif torch.cuda.is_available():
-            self.device = "cuda"
-            torch_dtype = torch.float16
-        else:
-            self.device = "cpu"
-            torch_dtype = torch.float32
+    def __init__(
+        self,
+        model_id: str = DEFAULT_MOONDREAM_MODEL,
+        revision: str = DEFAULT_MOONDREAM_REVISION,
+        device: str | None = None,
+    ) -> None:
+        self.device = resolve_device(device)
+        torch_dtype = torch.float32 if self.device == "cpu" else torch.float16
 
         # `transformers` wraps the auto classes in a decorator that mypy reads as taking a
         # model instance in the first slot, so the model id below looks like the wrong type.

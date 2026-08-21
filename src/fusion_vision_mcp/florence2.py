@@ -14,6 +14,7 @@ from PIL.Image import Image
 from torch import dtype
 from transformers import AutoProcessor, Florence2ForConditionalGeneration
 
+from .device import resolve_device
 from .subprocess import subprocess
 
 
@@ -29,15 +30,11 @@ class Florence2:
     model: Any
     processor: Any
 
-    def __init__(self, model_id: str) -> None:
-        if torch.backends.mps.is_available():
-            self.device = "mps:0"
+    def __init__(self, model_id: str, device: str | None = None) -> None:
+        self.device = resolve_device(device)
+        if self.device.startswith("mps"):
             self.torch_dtype = torch.float16
-        elif torch.cuda.is_available():
-            self.device = "cuda"
-            self.torch_dtype = torch.float32
         else:
-            self.device = "cpu"
             self.torch_dtype = torch.float32
 
         self.model = Florence2ForConditionalGeneration.from_pretrained(
@@ -108,30 +105,32 @@ def _bboxes_to_points(region: dict[str, Any]) -> dict[str, Any]:
 
 class Florence2SP:
     model_id: str
+    device: str | None
 
-    def __init__(self, model_id: str) -> None:
+    def __init__(self, model_id: str, device: str | None = None) -> None:
         self.model_id = model_id
+        self.device = device
 
     @subprocess
     def ocr(self, images: list[Image]) -> list[str]:
-        return Florence2(self.model_id).ocr(images)
+        return Florence2(self.model_id, self.device).ocr(images)
 
     @subprocess
     def caption(self, images: list[Image], level: CaptionLevel = CaptionLevel.NORMAL) -> list[str]:
-        return Florence2(self.model_id).caption(images, level)
+        return Florence2(self.model_id, self.device).caption(images, level)
 
     @subprocess
     def detect_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
-        return Florence2(self.model_id).detect_objects(images, object_name)
+        return Florence2(self.model_id, self.device).detect_objects(images, object_name)
 
     @subprocess
     def point_objects(self, images: list[Image], object_name: str) -> list[dict[str, Any]]:
-        return Florence2(self.model_id).point_objects(images, object_name)
+        return Florence2(self.model_id, self.device).point_objects(images, object_name)
 
     @subprocess
     def dense_region_caption(self, images: list[Image]) -> list[dict[str, Any]]:
-        return Florence2(self.model_id).dense_region_caption(images)
+        return Florence2(self.model_id, self.device).dense_region_caption(images)
 
     @subprocess
     def generate(self, prompt: str, images: list[Image]) -> list[str]:
-        return Florence2(self.model_id).generate(prompt, images)
+        return Florence2(self.model_id, self.device).generate(prompt, images)

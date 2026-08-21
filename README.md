@@ -32,7 +32,8 @@ Florence-2 has no open-ended visual question answering task. SAM2 backs `spatial
 boxes cannot answer questions about contact or containment.
 
 Each model loads on first use and is released independently, so a request only pays for what it needs: OCR never
-loads Moondream2 or SAM2.
+loads Moondream2 or SAM2. Weights are not bundled in this repository — each model downloads from the Hugging
+Face Hub on first use and is cached locally by `transformers`, the same as any other Hugging Face model.
 
 > **OCR vs. query_image**: Florence-2's OCR head is built for dense, printed, document-style text and can
 > confidently misread stylized, cursive, or low-contrast text (watermarks, logos, signage) rather than failing
@@ -254,6 +255,10 @@ task tokens this server does not expose as their own tool.
   time for a marginal gain.
 - **--idle-timeout**: Minutes of inactivity after which both models are unloaded and their memory released; they
   reload automatically on the next request. `0`, the default, keeps them loaded for the lifetime of the server.
+- **--device**: Torch device all three models load onto, e.g. `cpu`, `cuda`, `cuda:1`, `mps`. Auto-detected (MPS,
+  then CUDA, then CPU) when unset. Set this to pin the server to a specific accelerator, force CPU on a shared
+  GPU box, or target a non-default GPU index — including a GPU-equipped cloud VM, since this is a plain local
+  process with no separate cloud deployment path of its own.
 
 The models are large, so a server left running holds several gigabytes of memory. Setting `--idle-timeout 10`
 keeps repeat calls fast during a burst of work while handing the memory back once the work stops.

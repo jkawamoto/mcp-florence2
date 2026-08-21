@@ -27,7 +27,7 @@ uv tool install --editable . --force --extra-index-url https://download.pytorch.
 # Lint / format / type-check
 uvx ruff@0.16.1 check src tests
 uvx ruff@0.16.1 format src tests
-uv run --with mypy --with types-requests mypy src
+uv run --with mypy --with types-requests --with scipy-stubs mypy src
 
 # Tests (integration tests spawn the real server and download Florence-2-base on first run)
 uv run --with pytest --with anyio pytest tests -q

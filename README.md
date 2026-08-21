@@ -116,6 +116,12 @@ Detect instances of a named object in an image, returning bounding boxes and lab
 - **src**: A file path or URL to the image file that needs to be processed.
 - **object_name**: Name of the object to locate, e.g. `person`, `car`, `face`.
 
+> **Box count ≠ object count** on an ambiguous class name. Tested live on `wing`: a griffin with
+> one wing missing still returned 3 overlapping boxes (a whole-body box plus two sub-part boxes,
+> all labelled `wing`). Tested on `sword blade` against an image with two fused blades: one box
+> spanning both, not two. Prefer a more specific `object_name`, and treat results as candidates to
+> inspect, not a reliable count.
+
 ### point_objects
 
 Locate instances of a named object in an image, returning the centre coordinates of each match.
@@ -124,6 +130,9 @@ Locate instances of a named object in an image, returning the centre coordinates
 
 - **src**: A file path or URL to the image file that needs to be processed.
 - **object_name**: Name of the object to locate, e.g. `person`, `car`, `face`.
+
+> Same caveat as `detect_objects`: point count is not a reliable proxy for object count on an
+> ambiguous class name.
 
 ### dense_region_caption
 

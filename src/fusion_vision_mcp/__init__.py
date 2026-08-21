@@ -261,13 +261,24 @@ def server(
 
     @mcp.tool()
     def detect_objects(ctx: Context[AppContext], src: ImagePath, object_name: ObjectName) -> list[dict[str, Any]]:
-        """Detect instances of a named object in an image, returning bounding boxes."""
+        """Detect instances of a named object in an image, returning bounding boxes.
+
+        Box count is not a reliable proxy for object count on an ambiguous class name:
+        Florence-2 can return several overlapping boxes for one physical object (a whole-animal
+        box plus sub-part boxes all labelled 'wing'), or a single box spanning two touching
+        instances of the same object (two fused blades labelled once as 'sword blade'). Prefer a
+        more specific object_name, and treat the boxes as candidates to inspect rather than a count.
+        """
         with get_images(src) as images:
             return ctx.request_context.lifespan_context.processor.detect_objects(images, object_name)
 
     @mcp.tool()
     def point_objects(ctx: Context[AppContext], src: ImagePath, object_name: ObjectName) -> list[dict[str, Any]]:
-        """Locate instances of a named object in an image, returning center coordinates."""
+        """Locate instances of a named object in an image, returning center coordinates.
+
+        Same caveat as detect_objects: point count is not a reliable proxy for object count on an
+        ambiguous class name, since one physical object can be pointed at more than once.
+        """
         with get_images(src) as images:
             return ctx.request_context.lifespan_context.processor.point_objects(images, object_name)
 

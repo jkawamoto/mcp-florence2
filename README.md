@@ -5,11 +5,11 @@
 [![Python Application](https://github.com/Whoawhen/FusionVisionMCP/actions/workflows/python-app.yaml/badge.svg)](https://github.com/Whoawhen/FusionVisionMCP/actions/workflows/python-app.yaml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
-**Transform any AI assistant into a visual genius with 10 cutting-edge computer vision tools**
+**One comprehensive package - 10 cutting-edge computer vision tools**
 
 ![FusionVisionMCP Demo](FusionVisionMCP.jpg)
 
-While other vision tools offer basic OCR or simple captioning, FusionVisionMCP delivers comprehensive visual intelligence that rivals specialized computer vision systems—all in a single, easy-to-use package.
+While other vision tools offer basic OCR or simple captioning, FusionVisionMCP delivers comprehensive visual intelligence built from industry leading solutions — all in a single, easy-to-use package.
 
 ---
 
@@ -141,7 +141,7 @@ Process screenshots and memes to understand context and sentiment.
 
 ## Why FusionVisionMCP?
 
-Most AI vision tools are limited to basic OCR or simple image descriptions. FusionVisionMCP goes far beyond:
+
 
 | Feature | Basic Vision Tools | FusionVisionMCP |
 |---------|-------------------|------------------|
@@ -160,19 +160,21 @@ Understanding the differences between vision tools helps you choose the right so
 
 | Tool Name | Provider | Core Functions | Unique Advantages |
 |-----------|----------|----------------|-------------------|
-| **Florence-2** | Microsoft (Original) | `ocr`, `caption`, `process` | Efficient for basic OCR and captioning |
-| **FusionVisionMCP** | Whoawhen | `ocr`, `caption`, `process`, `detect_objects`, `point_objects`, `dense_region_caption`, `query_image`, `spatial_relations`, `analyze_image`, `batch_analyze_images` | Comprehensive vision analysis with spatial reasoning |
-| **Moondream2** | Vikhyat | `query_image` (Visual QA) | Specialized for open-ended visual question answering |
+| **Florence-2** | Microsoft (Original) | `ocr`, `caption`, `process`, object detection & grounding | Fast, efficient multi-task vision model |
+| **Moondream2** | Vikhyat | Visual question answering | Specialized for open-ended VQA |
+| **SAM2** | Meta (Original) | Segmentation masks | Precise pixel-level object segmentation |
+| **FusionVisionMCP** | Whoawhen | Exposes Florence-2, Moondream2, and SAM2 as MCP tools (`ocr`, `caption`, `process`, `detect_objects`, `point_objects`, `dense_region_caption`, `query_image`, `analyze_image`, `batch_analyze_images`), plus `spatial_relations` | The only one of the four that measures spatial relationships between objects — everything else here is one of the three models' own capability, exposed as an MCP tool |
 
-### FusionVisionMCP's Novel Functions
+### FusionVisionMCP's One Novel Function
 
-FusionVisionMCP introduces several advanced capabilities beyond the original Florence-2:
+Most of FusionVisionMCP's tools wrap a capability one of its three underlying models already has: `detect_objects`,
+`point_objects`, and `dense_region_caption` are Florence-2 task heads, `query_image` is Moondream2's own VQA. The
+one genuinely new capability, not provided by any single model in the stack, is:
 
-- **`spatial_relations`** - Measures how objects relate spatially (touch, containment, distance) using SAM2 segmentation
-- **`query_image`** - Ask open-ended questions about images with Moondream2
-- **`detect_objects` & `point_objects`** - Enhanced object detection with precise coordinates
-- **`dense_region_caption`** - Automatic captioning of all salient regions
-- **`analyze_image` & `batch_analyze_images`** - Multi-purpose tools for flexible processing
+- **`spatial_relations`** - Measures how objects relate spatially (touch, containment, distance, shape) by combining
+  Florence-2 boxes, SAM2 masks, and a from-scratch geometry module. No model here answers "does this actually touch
+  that" on its own — see [README_DETAILED.md](README_DETAILED.md#spatial_relations-) for how it's built and its
+  measured limits.
 
 ### Need More Technical Details?
 
@@ -210,7 +212,7 @@ FusionVisionMCP is designed to run efficiently across multiple hardware configur
 - **Memory Management** - Automatic model loading/unloading conserves system resources during inactive periods
 - **Cost-Effective Deployment** - Reduces dependency on expensive cloud GPU instances for routine vision tasks
 
-This design philosophy ensures that FusionVisionMCP enhances your AI workflow without competing for critical computational resources.
+FusionVisionMCP enhances your AI workflow without competing for critical computational resources.
 
 ---
 

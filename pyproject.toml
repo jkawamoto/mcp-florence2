@@ -4,7 +4,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "mcp-florence2"
-version = "0.4.0"
+version = "0.5.0"
 description = "An MCP server for processing images using Florence-2"
 readme = "README.md"
 authors = [
@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Image Recognition",
 ]
 dependencies = [
@@ -55,14 +56,16 @@ indent = 4
 disallow_untyped_defs = true
 warn_return_any = true
 warn_unused_configs = true
-overrides = [ { module = [
-    "dill",
-    "pypdfium2",
-    "transformers.*",
-], ignore_missing_imports = true } ]
+overrides = [
+    { module = [
+        "dill",
+        "pypdfium2",
+        "transformers.*",
+    ], ignore_missing_imports = true }
+]
 
 [tool.bumpversion]
-current_version = "0.4.0"
+current_version = "0.5.0"
 commit = true
 files = [
     { replace = 'version = "{new_version}"', filename = "pyproject.toml", search = 'version = "{current_version}"' },

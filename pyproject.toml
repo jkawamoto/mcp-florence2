@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Scientific/Engineering :: Image Recognition",
 ]
 dependencies = [
@@ -55,11 +56,13 @@ indent = 4
 disallow_untyped_defs = true
 warn_return_any = true
 warn_unused_configs = true
-overrides = [ { module = [
-    "dill",
-    "pypdfium2",
-    "transformers.*",
-], ignore_missing_imports = true } ]
+overrides = [
+    { module = [
+        "dill",
+        "pypdfium2",
+        "transformers.*",
+    ], ignore_missing_imports = true }
+]
 
 [tool.bumpversion]
 current_version = "0.4.0"

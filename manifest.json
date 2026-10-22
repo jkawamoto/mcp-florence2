@@ -21,8 +21,19 @@
       "args": [
         "--from",
         "${__dirname}",
-        "mcp-florence2"
+        "mcp-florence2",
+        "--model",
+        "${user_config.model}"
       ]
+    }
+  },
+  "user_config": {
+    "model": {
+      "type": "string",
+      "title": "Florence-2 Model",
+      "description": "Hugging Face model ID to use for image processing.",
+      "default": "florence-community/Florence-2-large",
+      "required": true
     }
   },
   "tools": [

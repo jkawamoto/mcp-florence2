@@ -105,6 +105,60 @@ Processes an image file with a custom prompt using the Florence-2 model.
 - **src**: A file path or URL to the image file that needs to be processed.
 - **prompt**: A custom prompt for the Florence-2 model.
 
+## Security Considerations
+
+When processing image files from URLs (`src` parameter starting with `http://` or `https://`), outbound HTTP requests are initiated directly from the server process using Python's `requests` library. In environments where untrusted users or prompts may supply URLs, this could potentially expose the server to Server-Side Request Forgery (SSRF) targeting internal network services or cloud metadata endpoints.
+
+To mitigate SSRF risks, it is strongly recommended to route all outgoing HTTP(S) traffic through an SSRF-safe forward proxy (such as [Smokescreen](https://github.com/stripe/smokescreen) or Squid configured to block internal IP ranges).
+
+Since `requests` automatically respects standard environment variables, proxy settings can be configured without modifying the application code:
+
+- `HTTP_PROXY` / `http_proxy`: Proxy URL for HTTP requests.
+- `HTTPS_PROXY` / `https_proxy`: Proxy URL for HTTPS requests.
+- `NO_PROXY` / `no_proxy`: Comma-separated list of hosts to bypass the proxy.
+
+### Configuration Examples
+
+#### Claude Desktop
+
+Add the `env` block to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "florence-2": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/jkawamoto/mcp-florence2",
+        "mcp-florence2"
+      ],
+      "env": {
+        "HTTP_PROXY": "http://proxy.example.com:8080",
+        "HTTPS_PROXY": "http://proxy.example.com:8080"
+      }
+    }
+  }
+}
+```
+
+#### Goose
+
+Add the `env` block to `~/.config/goose/config.yaml`:
+
+```yaml
+extensions:
+  florence2:
+    name: Florence-2
+    cmd: uvx
+    args: [ --from, git+https://github.com/jkawamoto/mcp-florence2, mcp-florence2 ]
+    env:
+      HTTP_PROXY: "http://proxy.example.com:8080"
+      HTTPS_PROXY: "http://proxy.example.com:8080"
+    enabled: true
+    type: stdio
+```
+
 ## License
 
 This application is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
